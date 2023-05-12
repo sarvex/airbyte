@@ -98,8 +98,7 @@ class IncrementalAmplitudeStream(AmplitudeStream, ABC):
 
     def next_page_token(self, response: requests.Response) -> Optional[Mapping[str, Any]]:
         parsed = urlparse.urlparse(response.url)
-        end = parse_qs(parsed.query).get("end", None)
-        if end:
+        if end := parse_qs(parsed.query).get("end", None):
             end_time = pendulum.parse(end[0])
             now = pendulum.now()
             if end_time.date() < now.date():
@@ -180,8 +179,7 @@ class ActiveUsers(IncrementalAmplitudeStream):
     time_interval = {"months": 1}
 
     def parse_response(self, response: requests.Response, **kwargs) -> Iterable[Mapping]:
-        response_data = response.json().get("data", [])
-        if response_data:
+        if response_data := response.json().get("data", []):
             series = list(map(list, zip(*response_data["series"])))
             for i, date in enumerate(response_data["xValues"]):
                 yield {"date": date, "statistics": dict(zip(response_data["seriesLabels"], series[i]))}
@@ -196,8 +194,7 @@ class AverageSessionLength(IncrementalAmplitudeStream):
     time_interval = {"days": 15}
 
     def parse_response(self, response: requests.Response, **kwargs) -> Iterable[Mapping]:
-        response_data = response.json().get("data", [])
-        if response_data:
+        if response_data := response.json().get("data", []):
             # From the Amplitude documentation it follows that "series" is an array with one element which is itself
             # an array that contains the average session length for each day.
             # https://developers.amplitude.com/docs/dashboard-rest-api#returns-2

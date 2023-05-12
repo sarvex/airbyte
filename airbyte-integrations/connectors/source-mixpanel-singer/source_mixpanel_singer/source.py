@@ -41,7 +41,7 @@ class SourceMixpanelSinger(BaseSingerSource):
     @property
     def default_start_date(self):
         one_year_ago = datetime.now() - timedelta(days=365)
-        return one_year_ago.replace(microsecond=0).isoformat() + "Z"
+        return f"{one_year_ago.replace(microsecond=0).isoformat()}Z"
 
     def transform_config(self, raw_config):
         airbyte_config = {

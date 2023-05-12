@@ -90,9 +90,7 @@ class SourceFile(Source):
 
     def _get_client(self, config: Mapping):
         """Construct client"""
-        client = self.client_class(**config)
-
-        return client
+        return self.client_class(**config)
 
     def check(self, logger, config: Mapping) -> AirbyteConnectionStatus:
         """

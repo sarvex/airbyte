@@ -41,14 +41,12 @@ class AsanaStream(HttpStream, ABC):
     page_size = 100
 
     def backoff_time(self, response: requests.Response) -> Optional[int]:
-        delay_time = response.headers.get("Retry-After")
-        if delay_time:
+        if delay_time := response.headers.get("Retry-After"):
             return int(delay_time)
 
     def next_page_token(self, response: requests.Response) -> Optional[Mapping[str, Any]]:
         decoded_response = response.json()
-        next_page = decoded_response.get("next_page")
-        if next_page:
+        if next_page := decoded_response.get("next_page"):
             return {"offset": next_page["offset"]}
 
     def request_params(
@@ -57,7 +55,7 @@ class AsanaStream(HttpStream, ABC):
 
         params = {"limit": self.page_size}
 
-        params.update(self.get_opt_fields())
+        params |= self.get_opt_fields()
 
         if next_page_token:
             params.update(next_page_token)
@@ -75,7 +73,7 @@ class AsanaStream(HttpStream, ABC):
         Plus each stream can have it's exceptions about how request required fields, like in `Tasks` stream.
         More info can be found here - https://developers.asana.com/docs/input-output-options.
         """
-        opt_fields = list()
+        opt_fields = []
         schema = self.get_json_schema()
 
         for prop, value in schema["properties"].items():
@@ -86,7 +84,7 @@ class AsanaStream(HttpStream, ABC):
             else:
                 opt_fields.append(prop)
 
-        return {"opt_fields": ",".join(opt_fields)} if opt_fields else dict()
+        return {"opt_fields": ",".join(opt_fields)} if opt_fields else {}
 
     def _handle_object_type(self, prop: str, value: MutableMapping[str, Any]) -> str:
         return f"{prop}.gid"
@@ -201,7 +199,7 @@ class Tasks(ProjectRelatedStream):
     def _handle_object_type(self, prop: str, value: dict) -> str:
         if prop == "custom_fields":
             return prop
-        elif prop in ("hearts", "likes"):
+        elif prop in {"hearts", "likes"}:
             return f"{prop}.user.gid"
         elif prop == "memberships":
             return "memberships.(project|section).gid"
@@ -231,10 +229,7 @@ class Users(WorkspaceRequestParamsRelatedStream):
         return "users"
 
     def _handle_object_type(self, prop: str, value: MutableMapping[str, Any]) -> str:
-        if prop == "photo":
-            return prop
-
-        return f"{prop}.gid"
+        return prop if prop == "photo" else f"{prop}.gid"
 
 
 class Workspaces(AsanaStream):

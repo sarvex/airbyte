@@ -191,8 +191,7 @@ class HttpStream(Stream, ABC):
         """
         response: requests.Response = self._session.send(request)
         if self.should_retry(response):
-            custom_backoff_time = self.backoff_time(response)
-            if custom_backoff_time:
+            if custom_backoff_time := self.backoff_time(response):
                 raise UserDefinedBackoffException(backoff=custom_backoff_time, request=request, response=response)
             else:
                 raise DefaultBackoffException(request=request, response=response)
@@ -224,8 +223,7 @@ class HttpStream(Stream, ABC):
             response = self._send_request(request)
             yield from self.parse_response(response, **args)
 
-            next_page_token = self.next_page_token(response)
-            if next_page_token:
+            if next_page_token := self.next_page_token(response):
                 args["next_page_token"] = next_page_token
             else:
                 pagination_complete = True

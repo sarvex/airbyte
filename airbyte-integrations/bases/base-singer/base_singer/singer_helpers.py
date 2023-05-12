@@ -67,10 +67,14 @@ def configured_for_incremental(configured_stream: ConfiguredAirbyteStream):
 
 
 def get_stream_level_metadata(metadatas: List[Dict[str, any]]) -> Optional[Dict[str, any]]:
-    for metadata in metadatas:
-        if not is_field_metadata(metadata) and "metadata" in metadata:
-            return metadata.get("metadata")
-    return None
+    return next(
+        (
+            metadata.get("metadata")
+            for metadata in metadatas
+            if not is_field_metadata(metadata) and "metadata" in metadata
+        ),
+        None,
+    )
 
 
 @dataclass
@@ -87,8 +91,7 @@ class SyncModeInfo:
 
 
 def set_sync_modes_from_metadata(airbyte_stream: AirbyteStream, metadatas: List[Dict[str, any]]):
-    stream_metadata = get_stream_level_metadata(metadatas)
-    if stream_metadata:
+    if stream_metadata := get_stream_level_metadata(metadatas):
         # A stream is incremental if it declares replication keys or if forced-replication-method is set to incremental
         replication_keys = stream_metadata.get("valid-replication-keys", [])
         if len(replication_keys) > 0:
@@ -187,8 +190,9 @@ class SingerHelper:
             selects_list = sel.select()
             empty_line_counter = 0
             for key, _ in selects_list:
-                line = key.fileobj.readline()
-                if not line:
+                if line := key.fileobj.readline():
+                    yield line, key.fileobj
+                else:
                     empty_line_counter += 1
                     if empty_line_counter >= len(selects_list):
                         eof = True
@@ -200,8 +204,6 @@ class SingerHelper:
 
                         if process.returncode != 0:
                             raise Exception(f"Underlying command {process.args} failed with exit code {process.returncode}")
-                else:
-                    yield line, key.fileobj
 
     @staticmethod
     def _airbyte_message_from_json(transformed_json: Mapping[str, Any]) -> Optional[AirbyteMessage]:
@@ -251,9 +253,10 @@ class SingerHelper:
                                 replication_method = _FULL_TABLE
                             new_metadata["metadata"]["forced-replication-method"] = replication_method
                             new_metadata["metadata"]["replication-method"] = replication_method
-                        else:
-                            if "fieldExclusions" in new_metadata["metadata"]:
-                                new_metadata["metadata"]["selected"] = True if not new_metadata["metadata"]["fieldExclusions"] else False
+                        elif "fieldExclusions" in new_metadata["metadata"]:
+                            new_metadata["metadata"][
+                                "selected"
+                            ] = not new_metadata["metadata"]["fieldExclusions"]
                         new_metadatas += [new_metadata]
                     singer_stream["metadata"] = new_metadatas
 

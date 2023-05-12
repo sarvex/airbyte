@@ -111,8 +111,7 @@ def invalid_connector_config_fixture(base_path, invalid_connector_config_path) -
 @pytest.fixture(name="malformed_connector_config")
 def malformed_connector_config_fixture(connector_config) -> MutableMapping[str, Any]:
     """TODO: drop required field, add extra"""
-    malformed_config = copy.deepcopy(connector_config)
-    return malformed_config
+    return copy.deepcopy(connector_config)
 
 
 @pytest.fixture(name="connector_spec")

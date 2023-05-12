@@ -111,7 +111,7 @@ class Client(BaseClient):
         except FacebookRequestError as exc:
             raise FacebookAPIException(f"Error: {exc.api_error_code()}, {exc.api_error_message()}") from exc
 
-        raise FacebookAPIException("Couldn't find account with id {}".format(account_id))
+        raise FacebookAPIException(f"Couldn't find account with id {account_id}")
 
     def health_check(self) -> Tuple[bool, str]:
         alive = True

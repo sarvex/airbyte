@@ -68,9 +68,7 @@ class Client(BaseClient):
             return None, str(error)
 
     def health_check(self) -> Tuple[bool, str]:
-        if self._connect_error:
-            return False, self._connect_error
-        return True, ""
+        return (False, self._connect_error) if self._connect_error else (True, "")
 
     @backoff.on_exception(backoff.expo, requests.exceptions.ConnectionError, max_tries=7)
     def _request(self, url: str, method: str = "GET", data: dict = None) -> List[dict]:
@@ -78,10 +76,7 @@ class Client(BaseClient):
 
         if response.status_code == 200:
             response_data = response.json()
-            if isinstance(response_data, list):
-                return response_data
-            else:
-                return [response_data]
+            return response_data if isinstance(response_data, list) else [response_data]
         return []
 
     def _get_dashboard_ids(self) -> List[int]:
@@ -152,8 +147,11 @@ class Client(BaseClient):
         yield from self._request(f"{self.BASE_URL}/integrations")
 
     def stream__lookml_dashboards(self, fields):
-        lookml_dashboards_list = [obj for obj in self._request(f"{self.BASE_URL}/dashboards") if isinstance(obj["id"], str)]
-        yield from lookml_dashboards_list
+        yield from [
+            obj
+            for obj in self._request(f"{self.BASE_URL}/dashboards")
+            if isinstance(obj["id"], str)
+        ]
 
     def stream__lookml_models(self, fields):
         yield from self._request(f"{self.BASE_URL}/lookml_models")

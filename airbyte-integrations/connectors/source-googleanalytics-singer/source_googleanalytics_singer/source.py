@@ -56,9 +56,12 @@ class GoogleAnalyticsSingerSource(BaseSingerSource):
     def _validate_custom_reports(self, custom_reports_data: List[dict]):
         custom_reports_schema = json.loads(pkgutil.get_data("source_googleanalytics_singer", "custom_reports_schema.json"))
         if not Draft4Validator(custom_reports_schema).is_valid(custom_reports_data):
-            error_messages = []
-            for error in Draft4Validator(custom_reports_schema).iter_errors(custom_reports_data):
-                error_messages.append(error.message)
+            error_messages = [
+                error.message
+                for error in Draft4Validator(custom_reports_schema).iter_errors(
+                    custom_reports_data
+                )
+            ]
             raise Exception("An error occurred during custom_reports data validation: " + "; ".join(error_messages))
 
     def read_catalog(self, catalog_path: str) -> ConfiguredAirbyteCatalog:
@@ -94,13 +97,12 @@ class GoogleAnalyticsSingerSource(BaseSingerSource):
             self.write_config(config, config_path)
 
     def transform_config(self, raw_config: json):
-        config = {
+        return {
             "key_file_location": raw_config["key_file_location"],
             "view_id": raw_config["view_id"],
             "start_date": raw_config["start_date"],
             "custom_reports": raw_config.get("custom_reports", ""),
         }
-        return config
 
     def try_connect(self, logger: AirbyteLogger, config: json):
         with open(config["key_file_location"], "r") as file:

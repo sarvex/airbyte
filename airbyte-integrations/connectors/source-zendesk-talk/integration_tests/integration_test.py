@@ -51,9 +51,11 @@ class TestZendeskTalkSource:
         Using standard tests is unreliable for Agent Activities and Agent Overview streams,
         because the data there changes in real-time, therefore additional pytests are used.
         """
-        records = []
-        for message in SourceZendeskTalk().read(AirbyteLogger(), config_credentials, configured_catalog):
-            if message.type == Type.RECORD:
-                records.append(message)
-
-        assert len(records) > 0
+        records = [
+            message
+            for message in SourceZendeskTalk().read(
+                AirbyteLogger(), config_credentials, configured_catalog
+            )
+            if message.type == Type.RECORD
+        ]
+        assert records

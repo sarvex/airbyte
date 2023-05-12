@@ -63,7 +63,7 @@ class BaseSource(Source):
         """Discover streams"""
         client = self._get_client(config)
 
-        return AirbyteCatalog(streams=[stream for stream in client.streams])
+        return AirbyteCatalog(streams=list(client.streams))
 
     def check(self, logger: AirbyteLogger, config: Mapping[str, Any]) -> AirbyteConnectionStatus:
         """Check connection"""

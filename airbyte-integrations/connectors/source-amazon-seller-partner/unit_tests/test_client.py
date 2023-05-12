@@ -56,7 +56,7 @@ class MockAmazonClient:
         self.credentials = credentials
         self.marketplace = marketplace
 
-    def fetch_orders(updated_after, page_count, next_token=None):
+    def fetch_orders(self, page_count, next_token=None):
         return ORDERS_RESPONSE
 
     @abc.abstractmethod
@@ -68,18 +68,16 @@ class AmazonSuccess(MockAmazonClient):
     def get_report(self, reportId):
         if self.COUNT == 3:
             return {"processingStatus": "DONE", "reportDocumentId": 1}
-        else:
-            self.COUNT = self.COUNT + 1
-            return {"processingStatus": "IN_PROGRESS"}
+        self.COUNT = self.COUNT + 1
+        return {"processingStatus": "IN_PROGRESS"}
 
 
 class AmazonCancelled(MockAmazonClient):
     def get_report(self, reportId):
         if self.COUNT == 3:
             return {"processingStatus": "CANCELLED"}
-        else:
-            self.COUNT = self.COUNT + 1
-            return {"processingStatus": "IN_PROGRESS"}
+        self.COUNT = self.COUNT + 1
+        return {"processingStatus": "IN_PROGRESS"}
 
 
 def get_base_client(config: Mapping):
@@ -138,7 +136,7 @@ def fmt_date(date):
 
 def test_get_date_parameters():
     # If the start date is more than one month ago then we expect a full 30 day increment
-    now = datetime.today()
+    now = datetime.now()
     two_months_ago = fmt_date(now - relativedelta(months=2))
     one_month_ago = fmt_date(now - relativedelta(months=1))
     assert (two_months_ago, one_month_ago) == BaseClient._get_date_parameters(two_months_ago)

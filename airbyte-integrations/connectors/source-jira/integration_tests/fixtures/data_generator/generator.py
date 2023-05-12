@@ -68,8 +68,7 @@ class Generator:
     @staticmethod
     def _get_authenticator(config: Mapping[str, Any]):
         token = b64encode(bytes(config["email"] + ":" + config["api_token"], "utf-8")).decode("ascii")
-        authenticator = TokenAuthenticator(token, auth_method="Basic")
-        return authenticator
+        return TokenAuthenticator(token, auth_method="Basic")
 
     def streams(self) -> List:
         config = self._get_configs()

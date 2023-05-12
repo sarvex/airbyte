@@ -71,10 +71,12 @@ class Connector(ABC):
         Returns the spec for this integration. The spec is a JSON-Schema object describing the required configurations (e.g: username and password)
         required to run this integration.
         """
-        raw_spec: Optional[bytes] = pkgutil.get_data(self.__class__.__module__.split(".")[0], "spec.json")
-        if not raw_spec:
+        if raw_spec := pkgutil.get_data(
+            self.__class__.__module__.split(".")[0], "spec.json"
+        ):
+            return ConnectorSpecification.parse_obj(json.loads(raw_spec))
+        else:
             raise ValueError("Unable to find spec.json.")
-        return ConnectorSpecification.parse_obj(json.loads(raw_spec))
 
     @abstractmethod
     def check(self, logger: AirbyteLogger, config: Mapping[str, Any]) -> AirbyteConnectionStatus:

@@ -54,8 +54,11 @@ from source_jira.streams import (
 
 class GeneratorMixin:
     def get_generate_headers(self):
-        headers = {"Accept": "application/json", "Content-Type": "application/json", **self.authenticator.get_auth_header()}
-        return headers
+        return {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            **self.authenticator.get_auth_header(),
+        }
 
     def generate_record(
         self,
@@ -106,7 +109,7 @@ class FilterSharingGenerator(FilterSharing, GeneratorMixin):
     def generate(self):
         filters_stream = Filters(authenticator=self.authenticator, domain=self._domain)
         for filters in filters_stream.read_records(sync_mode=SyncMode.full_refresh):
-            for index in range(random.randrange(4)):
+            for _ in range(random.randrange(4)):
                 group_name = random.choice(["Test group 0", "Test group 1", "Test group 2"])
                 payload = json.dumps({"type": "group", "groupname": group_name})
                 self.generate_record(payload, stream_slice={"filter_id": filters["id"]})
@@ -164,7 +167,7 @@ class IssueCommentsGenerator(IssueComments, GeneratorMixin):
     def generate(self):
         issues_stream = Issues(authenticator=self.authenticator, domain=self._domain)
         for issue in issues_stream.read_records(sync_mode=SyncMode.full_refresh):
-            for index in range(20):
+            for _ in range(20):
                 payload = json.dumps(
                     {
                         "body": {
@@ -395,7 +398,7 @@ class UsersGenerator(Users, GeneratorMixin):
     def generate(self):
         for index in range(50):
             letters = string.ascii_lowercase
-            password = "".join(random.choice(letters) for i in range(12))
+            password = "".join(random.choice(letters) for _ in range(12))
             payload = json.dumps(
                 {
                     "password": password,

@@ -52,12 +52,11 @@ class SourceAppsflyerSinger(SingerSource):
             test_date = (date.today() - timedelta(days=2)).strftime("%Y-%m-%d %H:%M")
             params = {"from": test_date, "to": test_date, "api_token": config["api_token"]}
 
-            base_url = "https://hq.appsflyer.com"
-            test_endpoint = "/export/{}/installs_report/v5".format(config["app_id"])
+            test_endpoint = f'/export/{config["app_id"]}/installs_report/v5'
 
-            url = base_url + test_endpoint
+            url = f"https://hq.appsflyer.com{test_endpoint}"
 
-            logger.info("GET {}".format(url))
+            logger.info(f"GET {url}")
             resp = requests.get(url, params=params)
 
             if resp.status_code == 200:
@@ -65,7 +64,9 @@ class SourceAppsflyerSinger(SingerSource):
             else:
                 return AirbyteConnectionStatus(
                     status=Status.FAILED,
-                    message=f"An exception occurred: Status Code: {0}, content: {1}".format(resp.status_code, resp.content),
+                    message='An exception occurred: Status Code: 0, content: 1'.format(
+                        resp.status_code, resp.content
+                    ),
                 )
         except Exception as e:
             return AirbyteConnectionStatus(status=Status.FAILED, message=f"An exception occurred: {str(e)}")

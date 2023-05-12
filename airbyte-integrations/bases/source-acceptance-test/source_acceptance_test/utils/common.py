@@ -45,7 +45,7 @@ def load_config(path: str) -> Config:
     if not path.exists():
         pytest.fail(f"config file {path.absolute()} does not exist")
 
-    with open(str(path), "r") as file:
+    with open(path, "r") as file:
         data = load(file, Loader=Loader)
         return Config.parse_obj(data)
 

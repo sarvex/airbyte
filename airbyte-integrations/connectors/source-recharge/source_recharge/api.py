@@ -59,16 +59,14 @@ class RechargeStream(HttpStream, ABC):
     ) -> MutableMapping[str, Any]:
         params = {"limit": self.limit}
         if next_page_token:
-            params.update(next_page_token)
+            params |= next_page_token
         if stream_slice:
             params.update(stream_slice)
         return params
 
     def parse_response(self, response: requests.Response, **kwargs) -> Iterable[Mapping]:
         response_data = response.json()
-        stream_data = self.get_stream_data(response_data)
-
-        yield from stream_data
+        yield from self.get_stream_data(response_data)
 
     def get_stream_data(self, response_data: Any) -> List[dict]:
         if self.data_path:

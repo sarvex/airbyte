@@ -58,9 +58,8 @@ class ShopifyStream(HttpStream, ABC):
         decoded_response = response.json()
         if len(decoded_response.get(self.data_field)) < self.limit:
             return None
-        else:
-            self.since_id = decoded_response.get(self.data_field)[-1]["id"]
-            return {"since_id": self.since_id}
+        self.since_id = decoded_response.get(self.data_field)[-1]["id"]
+        return {"since_id": self.since_id}
 
     def request_params(
         self, stream_state: Mapping[str, Any], stream_slice: Mapping[str, Any] = None, next_page_token: Mapping[str, Any] = None, **kwargs
@@ -74,8 +73,9 @@ class ShopifyStream(HttpStream, ABC):
 
     def parse_response(self, response: requests.Response, **kwargs) -> Iterable[Mapping]:
         json_response = response.json()
-        records = json_response.get(self.data_field, []) if self.data_field is not None else json_response
-        yield from records
+        yield from json_response.get(
+            self.data_field, []
+        ) if self.data_field is not None else json_response
 
     @property
     @abstractmethod
@@ -141,9 +141,7 @@ class Metafields(IncrementalShopifyStream):
 
     def request_params(self, stream_state=None, **kwargs) -> MutableMapping[str, Any]:
         stream_state = stream_state or {}
-        params = {"limit": self.limit}
-        params["since_id"] = stream_state.get(self.cursor_field)
-        return params
+        return {"limit": self.limit, "since_id": stream_state.get(self.cursor_field)}
 
 
 class CustomCollections(IncrementalShopifyStream):
@@ -161,9 +159,7 @@ class Collects(IncrementalShopifyStream):
 
     def request_params(self, stream_state=None, **kwargs) -> MutableMapping[str, Any]:
         stream_state = stream_state or {}
-        params = {"limit": self.limit}
-        params["since_id"] = stream_state.get(self.cursor_field)
-        return params
+        return {"limit": self.limit, "since_id": stream_state.get(self.cursor_field)}
 
 
 class OrderRefunds(IncrementalShopifyStream):

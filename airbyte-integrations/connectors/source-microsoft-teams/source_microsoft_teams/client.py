@@ -78,8 +78,7 @@ class Client:
         )
 
     def _get_api_url(self, endpoint: str) -> str:
-        api_url = f"{self.MICROSOFT_GRAPH_BASE_API_URL}{self.MICROSOFT_GRAPH_API_VERSION}/{endpoint}/"
-        return api_url
+        return f"{self.MICROSOFT_GRAPH_BASE_API_URL}{self.MICROSOFT_GRAPH_API_VERSION}/{endpoint}/"
 
     def _get_access_token(self) -> str:
         scope = ["https://graph.microsoft.com/.default"]
@@ -103,23 +102,21 @@ class Client:
         access_token = self._get_access_token()
         headers = {"Authorization": f"Bearer {access_token}"}
         response = requests.get(api_url, headers=headers, params=params)
-        if response.status_code == 429:
-            if "Retry-After" in response.headers:
-                pause_time = float(response.headers["Retry-After"])
-                time.sleep(pause_time)
-                response = requests.get(api_url, headers=headers, params=params)
+        if response.status_code == 429 and "Retry-After" in response.headers:
+            pause_time = float(response.headers["Retry-After"])
+            time.sleep(pause_time)
+            response = requests.get(api_url, headers=headers, params=params)
         if response.status_code != 200:
             raise requests.exceptions.RequestException(response.text)
-        if response.headers["Content-Type"] == "application/octet-stream":
-            raw_response = response.content
-        else:
-            raw_response = response.json()
-        return raw_response
+        return (
+            response.content
+            if response.headers["Content-Type"] == "application/octet-stream"
+            else response.json()
+        )
 
     @staticmethod
     def _get_response_value_unsafe(raw_response: Dict) -> List:
-        value = raw_response["value"]
-        return value
+        return raw_response["value"]
 
     def _get_request_params(self, params: Optional[Dict] = None, pagination: bool = True) -> Dict:
         if self.PAGINATION_COUNT and pagination:
@@ -153,8 +150,7 @@ class Client:
         return streams
 
     def get_users(self):
-        for users in self._fetch_data("users"):
-            yield users
+        yield from self._fetch_data("users")
 
     def get_groups(self):
         for groups in self._fetch_data("groups"):
@@ -170,63 +166,62 @@ class Client:
 
     def get_group_members(self):
         for group_id in self._get_group_ids():
-            for members in self._fetch_data(f"groups/{group_id}/members"):
-                yield members
+            yield from self._fetch_data(f"groups/{group_id}/members")
 
     def get_group_owners(self):
         for group_id in self._get_group_ids():
-            for owners in self._fetch_data(f"groups/{group_id}/owners"):
-                yield owners
+            yield from self._fetch_data(f"groups/{group_id}/owners")
 
     def get_channels(self):
         for group_id in self._get_group_ids():
-            for channels in self._fetch_data(f"teams/{group_id}/channels", pagination=False):
-                yield channels
+            yield from self._fetch_data(f"teams/{group_id}/channels", pagination=False)
 
     def _get_channel_ids(self, group_id: str):
         api_url = self._get_api_url(f"teams/{group_id}/channels")
-        # TODO: pass params={"$select": "id"} to make_request once the related bug in the MSFT API
-        # is fixed: microsoftgraph/microsoft-graph-docs#11494
-        channels_ids = self._get_response_value_unsafe(self._make_request(api_url))
-        return channels_ids
+        return self._get_response_value_unsafe(self._make_request(api_url))
 
     def get_channel_members(self):
         for group_id in self._get_group_ids():
             channels = self._get_channel_ids(group_id=group_id)
             for channel in channels:
-                for members in self._fetch_data(f'teams/{group_id}/channels/{channel["id"]}/members'):
-                    yield members
+                yield from self._fetch_data(
+                    f'teams/{group_id}/channels/{channel["id"]}/members'
+                )
 
     def get_channel_tabs(self):
         for group_id in self._get_group_ids():
             channels = self._get_channel_ids(group_id=group_id)
             for channel in channels:
-                for tabs in self._fetch_data(f'teams/{group_id}/channels/{channel["id"]}/tabs', pagination=False):
-                    yield tabs
+                yield from self._fetch_data(
+                    f'teams/{group_id}/channels/{channel["id"]}/tabs',
+                    pagination=False,
+                )
 
     def get_conversations(self):
         for group_id in self._get_group_ids():
-            for conversations in self._fetch_data(f"groups/{group_id}/conversations"):
-                yield conversations
+            yield from self._fetch_data(f"groups/{group_id}/conversations")
 
     def _get_conversation_ids(self, group_id: str):
         api_url = self._get_api_url(f"groups/{group_id}/conversations")
         params = {"$select": "id"}
-        conversation_ids = self._get_response_value_unsafe(self._make_request(api_url, params=params))
-        return conversation_ids
+        return self._get_response_value_unsafe(
+            self._make_request(api_url, params=params)
+        )
 
     def get_conversation_threads(self):
         for group_id in self._get_group_ids():
             conversations = self._get_conversation_ids(group_id=group_id)
             for conversation in conversations:
-                for threads in self._fetch_data(f'groups/{group_id}/conversations/{conversation["id"]}/threads'):
-                    yield threads
+                yield from self._fetch_data(
+                    f'groups/{group_id}/conversations/{conversation["id"]}/threads'
+                )
 
     def _get_thread_ids(self, group_id: str, conversation_id: str):
         api_url = self._get_api_url(f"groups/{group_id}/conversations/{conversation_id}/threads")
         params = {"$select": "id"}
-        thread_ids = self._get_response_value_unsafe(self._make_request(api_url, params=params))
-        return thread_ids
+        return self._get_response_value_unsafe(
+            self._make_request(api_url, params=params)
+        )
 
     def get_conversation_posts(self):
         for group_id in self._get_group_ids():
@@ -234,13 +229,13 @@ class Client:
             for conversation in conversations:
                 threads = self._get_thread_ids(group_id, conversation["id"])
                 for thread in threads:
-                    for posts in self._fetch_data(f'groups/{group_id}/conversations/{conversation["id"]}/threads/{thread["id"]}/posts'):
-                        yield posts
+                    yield from self._fetch_data(
+                        f'groups/{group_id}/conversations/{conversation["id"]}/threads/{thread["id"]}/posts'
+                    )
 
     def get_team_drives(self):
         for group_id in self._get_group_ids():
-            for drives in self._fetch_data(f"groups/{group_id}/drives"):
-                yield drives
+            yield from self._fetch_data(f"groups/{group_id}/drives")
 
     def get_team_device_usage_report(self):
         period = self.configs["period"]

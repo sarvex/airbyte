@@ -52,7 +52,7 @@ class StandardSourceTestRunner(StandardSourceTestIface):
     @staticmethod
     def write_output(json, path):
         print(f"output path: {path}")
-        with open(path + "/" + StandardSourceTestRunner.OUTPUT_FILENAME, "w") as fh:
+        with open(f"{path}/{StandardSourceTestRunner.OUTPUT_FILENAME}", "w") as fh:
             fh.write(json)
 
     def start(self, args):
@@ -87,7 +87,7 @@ class StandardSourceTestRunner(StandardSourceTestIface):
         elif cmd == TestAction.GET_REGEX_TESTS:
             output = json.dumps({"tests": self.test.get_regex_tests()})
         else:
-            raise Exception("Unexpected command " + cmd)
+            raise Exception(f"Unexpected command {cmd}")
 
         print("writing output")
         if output:

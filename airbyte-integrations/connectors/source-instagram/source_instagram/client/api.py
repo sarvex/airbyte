@@ -96,11 +96,9 @@ class StreamAPI(ABC):
         """
         instance = self.get_instance_cursor(ig_user, method_name, params, fields)
         yield from instance._queue
-        next_page = not instance._finished_iteration
-        while next_page:
+        while next_page := not instance._finished_iteration:
             self.load_next_page(instance)
             yield from instance._queue
-            next_page = not instance._finished_iteration
 
 
 class IncrementalStreamAPI(StreamAPI, ABC):
@@ -237,25 +235,24 @@ class UserInsightsAPI(IncrementalStreamAPI):
                     if not insight_record.get("date"):
                         insight_record["date"] = insight.get("values")[0]["end_time"]
 
-                record = self.state_filter(insight_record)
-                if record:
+                if record := self.state_filter(insight_record):
                     yield record
 
     def _params(self, account_id: str) -> Iterator[List]:
         buffered_start_date = self._state[account_id]
 
         while buffered_start_date <= self._end_date:
-            params_list = []
-            for period, metrics in self.METRICS_BY_PERIOD.items():
-                params_list.append(
-                    {
-                        "metric": metrics,
-                        "period": [period],
-                        "since": buffered_start_date.to_datetime_string(),
-                        "until": buffered_start_date.add(days=self.days_increment).to_datetime_string(),
-                    }
-                )
-            yield params_list
+            yield [
+                {
+                    "metric": metrics,
+                    "period": [period],
+                    "since": buffered_start_date.to_datetime_string(),
+                    "until": buffered_start_date.add(
+                        days=self.days_increment
+                    ).to_datetime_string(),
+                }
+                for period, metrics in self.METRICS_BY_PERIOD.items()
+            ]
             buffered_start_date = buffered_start_date.add(days=self.days_increment)
 
     def _set_state(self, account_id: str):
@@ -373,8 +370,7 @@ class StoriesInsightsAPI(StoriesAPI):
         for account in self._api.accounts:
             stories = self._get_stories(account["instagram_business_account"], {"limit": self.result_return_limit}, fields=[])
             for ig_story in stories:
-                insights = self._get_insights(ig_story)
-                if insights:
+                if insights := self._get_insights(ig_story):
                     yield {
                         **{
                             "id": ig_story.get("id"),

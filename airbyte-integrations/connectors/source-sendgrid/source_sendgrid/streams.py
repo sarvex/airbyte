@@ -47,9 +47,9 @@ class SendgridStream(HttpStream, ABC):
         next_page_token: Mapping[str, Any] = None,
     ) -> Iterable[Mapping]:
         json_response = response.json()
-        records = json_response.get(self.data_field, []) if self.data_field is not None else json_response
-        for record in records:
-            yield record
+        yield from json_response.get(
+            self.data_field, []
+        ) if self.data_field is not None else json_response
 
 
 class SendgridStreamOffsetPagination(SendgridStream):
@@ -105,14 +105,10 @@ class SendgridStreamMetadataPagination(SendgridStream):
         stream_slice: Mapping[str, Any] = None,
         next_page_token: Mapping[str, Any] = None,
     ) -> MutableMapping[str, Any]:
-        params = {}
-        if not next_page_token:
-            params = {"page_size": self.limit}
-        return params
+        return {"page_size": self.limit} if not next_page_token else {}
 
     def next_page_token(self, response: requests.Response) -> Optional[Mapping[str, Any]]:
-        next_page_url = response.json()["_metadata"].get("next", False)
-        if next_page_url:
+        if next_page_url := response.json()["_metadata"].get("next", False):
             return {"next_page_url": next_page_url.replace(self.url_base, "")}
 
     @staticmethod

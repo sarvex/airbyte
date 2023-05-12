@@ -70,8 +70,7 @@ class GoogleAdsStream(Stream, ABC):
 
     def parse_response(self, response: SearchGoogleAdsResponse) -> Iterable[Mapping]:
         for result in response:
-            record = GoogleAds.parse_single_result(self.get_json_schema(), result)
-            yield record
+            yield GoogleAds.parse_single_result(self.get_json_schema(), result)
 
     def read_records(
         self,

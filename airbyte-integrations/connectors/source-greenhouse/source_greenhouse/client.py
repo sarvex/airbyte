@@ -35,11 +35,9 @@ DEFAULT_ITEMS_PER_PAGE = 100
 
 def paginator(request, **params):
     """Split requests in multiple batches and return records as generator"""
-    rows = request.get(**params)
-    yield from rows
+    yield from request.get(**params)
     while request.records_remaining:
-        rows = request.get_next()
-        yield from rows
+        yield from request.get_next()
 
 
 class Client(BaseClient):

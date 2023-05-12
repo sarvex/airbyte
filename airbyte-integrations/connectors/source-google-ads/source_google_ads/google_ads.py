@@ -99,7 +99,4 @@ class GoogleAds:
     @staticmethod
     def parse_single_result(schema: Mapping[str, Any], result: GoogleAdsRow):
         fields = GoogleAds.get_fields_from_schema(schema)
-        single_record = {}
-        for field in fields:
-            single_record[field] = GoogleAds.get_field_value(result, field)
-        return single_record
+        return {field: GoogleAds.get_field_value(result, field) for field in fields}

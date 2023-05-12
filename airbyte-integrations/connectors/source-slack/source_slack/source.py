@@ -45,8 +45,9 @@ class SlackStream(HttpStream, ABC):
         # Slack uses a cursor-based pagination strategy.
         # Extract the cursor from the response if it exists and return it in a format that can be used to update request parameters
         json_response = response.json()
-        next_cursor = json_response.get("response_metadata", {}).get("next_cursor")
-        if next_cursor:
+        if next_cursor := json_response.get("response_metadata", {}).get(
+            "next_cursor"
+        ):
             return {"cursor": json_response.get("response_metadata", {}).get("next_cursor")}
 
     def request_params(
@@ -68,8 +69,7 @@ class SlackStream(HttpStream, ABC):
         next_page_token: Mapping[str, Any] = None,
     ) -> Iterable[Mapping]:
         json_response = response.json()
-        for record in json_response.get(self.data_field, []):
-            yield record
+        yield from json_response.get(self.data_field, [])
 
     def backoff_time(self, response: requests.Response) -> Optional[float]:
         # This method is called if we run into the rate limit. Slack puts the retry time in the `Retry-After` response header so we

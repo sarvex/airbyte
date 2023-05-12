@@ -57,5 +57,5 @@ class TestInstagramSource:
             elif message.type == Type.STATE:
                 state.append(message)
 
-        assert len(records) > 0
-        assert len(state) > 0
+        assert records
+        assert state

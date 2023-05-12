@@ -56,8 +56,7 @@ class MockSource(Source):
 def _as_arglist(cmd: str, named_args: Mapping[str, Any]) -> List[str]:
     out = [cmd]
     for k, v in named_args.items():
-        out.append(f"--{k}")
-        out.append(v)
+        out.extend((f"--{k}", v))
     return out
 
 
@@ -66,16 +65,7 @@ def entrypoint() -> AirbyteEntrypoint:
     return AirbyteEntrypoint(MockSource())
 
 
-@pytest.mark.parametrize(
-    ["cmd", "args"],
-    [
-        ("spec", dict()),
-        ("check", {"config": "config_path"}),
-        ("discover", {"config": "config_path"}),
-        ("read", {"config": "config_path", "catalog": "catalog_path", "state": "None"}),
-        ("read", {"config": "config_path", "catalog": "catalog_path", "state": "state_path"}),
-    ],
-)
+@pytest.mark.parametrize(["cmd", "args"], [("spec", {}), ("check", {"config": "config_path"}), ("discover", {"config": "config_path"}), ("read", {"config": "config_path", "catalog": "catalog_path", "state": "None"}), ("read", {"config": "config_path", "catalog": "catalog_path", "state": "state_path"})])
 def test_parse_valid_args(cmd: str, args: Mapping[str, Any], entrypoint: AirbyteEntrypoint):
     arglist = _as_arglist(cmd, args)
     parsed_args = entrypoint.parse_args(arglist)

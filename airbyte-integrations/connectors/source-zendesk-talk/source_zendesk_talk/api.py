@@ -130,16 +130,17 @@ class Stream(ABC):
         while True:
             response = getter(domain_inclusion=domain_inclusion)
             if response.get(self.data_field) is None:
-                raise RuntimeError("Unexpected API response: {} not in {}".format(self.data_field, response.keys()))
+                raise RuntimeError(
+                    f"Unexpected API response: {self.data_field} not in {response.keys()}"
+                )
 
             yield from response[self.data_field]
             counter += len(response[self.data_field])
 
             if response[self.count_field] <= counter:
                 break
-            else:
-                getter.keywords.update({"url": response[self.has_more], "params": None})
-                domain_inclusion = True
+            getter.keywords.update({"url": response[self.has_more], "params": None})
+            domain_inclusion = True
 
     def read_stats(self, getter: Callable) -> Any:
         response = getter()
@@ -162,9 +163,7 @@ class IncrementalStream(Stream, ABC):
     @property
     def state(self) -> Optional[Mapping[str, Any]]:
         """Current state, if wasn't set return None"""
-        if self._state:
-            return {self.state_pk: str(self._state)}
-        return None
+        return {self.state_pk: str(self._state)} if self._state else None
 
     @state.setter
     def state(self, value):

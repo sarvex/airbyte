@@ -36,12 +36,8 @@ from airbyte_cdk.models import AirbyteCatalog, AirbyteMessage, ConfiguredAirbyte
 class Source(Connector, ABC):
     # can be overridden to change an input state
     def read_state(self, state_path: str) -> Dict[str, Any]:
-        if state_path:
-            state_obj = json.loads(open(state_path, "r").read())
-        else:
-            state_obj = {}
-        state = defaultdict(dict, state_obj)
-        return state
+        state_obj = json.loads(open(state_path, "r").read()) if state_path else {}
+        return defaultdict(dict, state_obj)
 
     # can be overridden to change an input catalog
     def read_catalog(self, catalog_path: str) -> ConfiguredAirbyteCatalog:

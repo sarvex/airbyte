@@ -39,8 +39,7 @@ class SourceGoogleAdwordsSinger(SingerSource):
     def _get_accounts(logger: AirbyteLogger, sdk_client: adwords.AdWordsClient, selector: Dict):
         # obtaining accounts for customer_id
         managed_customer_page = sdk_client.GetService(service_name="ManagedCustomerService", version=VERSION).get(selector)
-        accounts = managed_customer_page.entries
-        return accounts
+        return managed_customer_page.entries
 
     def _check_internal(self, logger: AirbyteLogger, streams: List, config: json):
         # checking if REPORT syncing will be called for manager account
@@ -66,8 +65,7 @@ class SourceGoogleAdwordsSinger(SingerSource):
                         }
                     ],
                 }
-                accounts = self._get_accounts(logger, sdk_client, selector)
-                if accounts:
+                if accounts := self._get_accounts(logger, sdk_client, selector):
                     account = accounts[0]
                     is_manager = account.canManageClients
                     for stream in streams:
@@ -138,9 +136,10 @@ class SourceGoogleAdwordsSinger(SingerSource):
             "SHOPPING_PERFORMANCE_REPORT",
             "PLACEHOLDER_REPORT",
         ]
-        overrides = {}
-        for stream_name in incremental_streams:
-            overrides[stream_name] = SyncModeInfo(supported_sync_modes=[SyncMode.incremental])
+        overrides = {
+            stream_name: SyncModeInfo(supported_sync_modes=[SyncMode.incremental])
+            for stream_name in incremental_streams
+        }
         for stream_name in full_refresh_streams:
             overrides[stream_name] = SyncModeInfo(supported_sync_modes=[SyncMode.full_refresh])
         return overrides

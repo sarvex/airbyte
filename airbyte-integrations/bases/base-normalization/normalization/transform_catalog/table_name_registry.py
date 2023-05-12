@@ -237,15 +237,19 @@ class TableNameRegistry:
         This is using a hash of full names but it is hard to use and remember, so this should be done rarely...
         We'd prefer to use "simple" names instead as much as possible.
         """
-        if len(json_path) == 1:
-            # collisions on a top level stream name, add a hash of schema + stream name to the (truncated?) table name to make it unique
-            result = self.name_transformer.normalize_table_name(f"{stream_name}_{hash_json_path([schema] + json_path)}")
-        else:
-            # collisions on a nested sub-stream
-            result = self.name_transformer.normalize_table_name(
-                get_nested_hashed_table_name(self.name_transformer, schema, json_path, stream_name), False, False
+        return (
+            self.name_transformer.normalize_table_name(
+                f"{stream_name}_{hash_json_path([schema] + json_path)}"
             )
-        return result
+            if len(json_path) == 1
+            else self.name_transformer.normalize_table_name(
+                get_nested_hashed_table_name(
+                    self.name_transformer, schema, json_path, stream_name
+                ),
+                False,
+                False,
+            )
+        )
 
     @staticmethod
     def get_registry_key(schema: str, json_path: List[str], stream_name: str) -> str:
@@ -264,14 +268,15 @@ class TableNameRegistry:
         if len(self.simple_file_registry[table_name]) == 1:
             # no collisions on file naming
             return table_name
-        else:
-            max_length = self.name_transformer.get_name_max_length()
+        max_length = self.name_transformer.get_name_max_length()
             # if schema . table fits into the destination, we use this naming convention
-            if len(schema) + len(table_name) + 1 < max_length:
-                return f"{schema}_{table_name}"
-            else:
-                # we have to make sure our filename is unique, use hash of full name
-                return self.name_transformer.normalize_table_name(f"{schema}_{table_name}_{hash_name(schema + table_name)}")
+        return (
+            f"{schema}_{table_name}"
+            if len(schema) + len(table_name) + 1 < max_length
+            else self.name_transformer.normalize_table_name(
+                f"{schema}_{table_name}_{hash_name(schema + table_name)}"
+            )
+        )
 
     def get_schema_name(self, schema: str, json_path: List[str], stream_name: str):
         """

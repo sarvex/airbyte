@@ -308,10 +308,7 @@ class ReportsBase(HarvestStream, ABC):
         current_date = pendulum.now().date()
         self._from_date = from_date or current_date.subtract(years=1)
         # `to` date greater than `from` date causes an exception on Harvest
-        if self._from_date > current_date:
-            self._to_date = from_date
-        else:
-            self._to_date = current_date
+        self._to_date = from_date if self._from_date > current_date else current_date
 
     def request_params(self, stream_state, **kwargs) -> MutableMapping[str, Any]:
         params = super().request_params(stream_state, **kwargs)

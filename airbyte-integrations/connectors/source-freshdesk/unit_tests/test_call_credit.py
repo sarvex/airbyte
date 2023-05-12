@@ -32,7 +32,7 @@ def test_consume_one():
     """Multiple consumptions of 1 cred will reach limit"""
     credit = CallCredit(balance=3, reload_period=1)
     ts_1 = time.time()
-    for i in range(4):
+    for _ in range(4):
         credit.consume(1)
     ts_2 = time.time()
 

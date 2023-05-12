@@ -74,7 +74,7 @@ def read_json(filepath):
 
 
 def _call_api(endpoint, token):
-    return requests.get("https://cloud.iexapis.com/v1/" + endpoint + "?token=" + token)
+    return requests.get(f"https://cloud.iexapis.com/v1/{endpoint}?token={token}")
 
 
 def check(config):
@@ -129,10 +129,7 @@ def discover():
 
 
 def get_input_file_path(path):
-    if os.path.isabs(path):
-        return path
-    else:
-        return os.path.join(os.getcwd(), path)
+    return path if os.path.isabs(path) else os.path.join(os.getcwd(), path)
 
 
 def spec():

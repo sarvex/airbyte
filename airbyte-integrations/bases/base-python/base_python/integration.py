@@ -73,12 +73,8 @@ class Integration(object):
 
     # can be overridden to change an input state
     def read_state(self, state_path: str) -> Dict[str, any]:
-        if state_path:
-            state_obj = json.loads(open(state_path, "r").read())
-        else:
-            state_obj = {}
-        state = defaultdict(dict, state_obj)
-        return state
+        state_obj = json.loads(open(state_path, "r").read()) if state_path else {}
+        return defaultdict(dict, state_obj)
 
     def spec(self, logger: AirbyteLogger) -> ConnectorSpecification:
         """

@@ -38,8 +38,7 @@ class SourceAmplitude(AbstractSource):
     def _convert_auth_to_token(self, username: str, password: str) -> str:
         username = username.encode("latin1")
         password = password.encode("latin1")
-        token = b64encode(b":".join((username, password))).strip().decode("ascii")
-        return token
+        return b64encode(b":".join((username, password))).strip().decode("ascii")
 
     def check_connection(self, logger: AirbyteLogger, config: Mapping[str, Any]) -> Tuple[bool, any]:
         try:

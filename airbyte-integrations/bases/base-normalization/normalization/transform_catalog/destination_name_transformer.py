@@ -118,11 +118,10 @@ class DestinationNameTransformer:
         return input_name
 
     def get_name_max_length(self):
-        if self.destination_type.value in DESTINATION_SIZE_LIMITS:
-            destination_limit = DESTINATION_SIZE_LIMITS[self.destination_type.value]
-            return destination_limit - TRUNCATE_DBT_RESERVED_SIZE - TRUNCATE_RESERVED_SIZE
-        else:
+        if self.destination_type.value not in DESTINATION_SIZE_LIMITS:
             raise KeyError(f"Unknown destination type {self.destination_type}")
+        destination_limit = DESTINATION_SIZE_LIMITS[self.destination_type.value]
+        return destination_limit - TRUNCATE_DBT_RESERVED_SIZE - TRUNCATE_RESERVED_SIZE
 
     # Private methods
 
@@ -149,10 +148,7 @@ class DestinationNameTransformer:
             return result
         else:
             result = self.__normalize_identifier_case(result, is_quoted=False)
-        if in_jinja:
-            # to refer to columns while already in jinja context, always quote
-            return f"'{result}'"
-        return result
+        return f"'{result}'" if in_jinja else result
 
     def __normalize_naming_conventions(self, input_name: str) -> str:
         result = input_name

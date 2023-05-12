@@ -95,7 +95,7 @@ class BaseClient:
             orders = response["Orders"]
             if "NextToken" in response:
                 NEXT_TOKEN = response["NextToken"]
-            HAS_NEXT = True if NEXT_TOKEN else False
+            HAS_NEXT = bool(NEXT_TOKEN)
             PAGE = PAGE + 1
             for order in orders:
                 current_date = pendulum.parse(order[cursor_field]).to_date_string()
@@ -174,7 +174,7 @@ class BaseClient:
                 logger.info("Report status: DONE")
                 document_id = response["reportDocumentId"]
                 return True, document_id
-            elif response["processingStatus"] == "CANCELLED" or response["processingStatus"] == "FATAL":
+            elif response["processingStatus"] in ["CANCELLED", "FATAL"]:
                 # The report was cancelled. There are two ways a report can be cancelled:
                 # an explicit cancellation request before the report starts processing,
                 # or an automatic cancellation if there is no data to return.
@@ -191,10 +191,7 @@ class BaseClient:
 
     @staticmethod
     def _convert_array_into_dict(headers: List[Dict[str, Any]], values: List[Dict[str, Any]]):
-        records = []
-        for value in values:
-            records.append(dict(zip(headers, value.split("\t"))))
-        return records
+        return [dict(zip(headers, value.split("\t"))) for value in values]
 
     @staticmethod
     def _increase_date_by_month(current_date: str) -> str:

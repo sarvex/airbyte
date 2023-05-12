@@ -86,8 +86,7 @@ class SourceJira(AbstractSource):
     @staticmethod
     def get_authenticator(config: Mapping[str, Any]):
         token = b64encode(bytes(config["email"] + ":" + config["api_token"], "utf-8")).decode("ascii")
-        authenticator = TokenAuthenticator(token, auth_method="Basic")
-        return authenticator
+        return TokenAuthenticator(token, auth_method="Basic")
 
     def check_connection(self, logger: AirbyteLogger, config: Mapping[str, Any]) -> Tuple[bool, Optional[Any]]:
         alive = True
@@ -97,12 +96,10 @@ class SourceJira(AbstractSource):
             authenticator = self.get_authenticator(config)
             args = {"authenticator": authenticator, "domain": config["domain"]}
             issue_resolutions = IssueResolutions(**args)
-            for item in issue_resolutions.read_records(sync_mode=SyncMode.full_refresh):
+            for _ in issue_resolutions.read_records(sync_mode=SyncMode.full_refresh):
                 continue
         except ConnectionError as error:
             alive, error_msg = False, repr(error)
-        # If the input domain is incorrect or doesn't exist, then the response would be empty, resulting in a
-        # JSONDecodeError
         except JSONDecodeError:
             alive, error_msg = (
                 False,

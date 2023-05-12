@@ -63,15 +63,12 @@ class StripeStream(HttpStream, ABC):
 
         # Handle pagination by inserting the next page's token in the request parameters
         if next_page_token:
-            params.update(next_page_token)
+            params |= next_page_token
 
         return params
 
     def request_headers(self, **kwargs) -> Mapping[str, Any]:
-        if self.account_id:
-            return {"Stripe-Account": self.account_id}
-
-        return {}
+        return {"Stripe-Account": self.account_id} if self.account_id else {}
 
     def parse_response(self, response: requests.Response, **kwargs) -> Iterable[Mapping]:
         response_json = response.json()

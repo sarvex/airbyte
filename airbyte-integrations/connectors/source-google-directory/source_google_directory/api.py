@@ -45,8 +45,7 @@ class API:
         self._admin_email = email
 
     def _load_account_info(self) -> Dict:
-        account_info = json.loads(self._credentials_json)
-        return account_info
+        return json.loads(self._credentials_json)
 
     def _obtain_creds(self) -> service_account.Credentials:
         account_info = self._load_account_info()
@@ -56,8 +55,7 @@ class API:
     def _construct_resource(self) -> Resource:
         if not self._creds:
             self._obtain_creds()
-        service = build("admin", "directory_v1", credentials=self._creds)
-        return service
+        return build("admin", "directory_v1", credentials=self._creds)
 
     def _get_resource(self, name: str):
         service = self._construct_resource()
@@ -66,8 +64,7 @@ class API:
     @backoff.on_exception(backoff.expo, GoogleApiHttpError, max_tries=7, giveup=rate_limit_handling)
     def get(self, name: str, params: Dict = None) -> Dict:
         resource = self._get_resource(name)
-        response = resource().list(**params).execute()
-        return response
+        return resource().list(**params).execute()
 
 
 class StreamAPI(ABC):

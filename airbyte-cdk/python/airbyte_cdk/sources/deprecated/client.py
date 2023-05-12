@@ -64,23 +64,22 @@ class BaseClient(StreamStateMixin, ABC):
     def _enumerate_methods(self) -> Mapping[str, Callable]:
         """Detect available streams and return mapping"""
         prefix = "stream__"
-        mapping = {}
         methods = inspect.getmembers(self.__class__, predicate=inspect.isfunction)
-        for name, method in methods:
-            if name.startswith(prefix):
-                mapping[name[len(prefix) :]] = getattr(self, name)
-
-        return mapping
+        return {
+            name[len(prefix) :]: getattr(self, name)
+            for name, method in methods
+            if name.startswith(prefix)
+        }
 
     @staticmethod
     def _get_fields_from_stream(stream: AirbyteStream) -> List[str]:
         return list(stream.json_schema.get("properties", {}).keys())
 
     def _get_stream_method(self, name: str) -> Callable:
-        method = self._stream_methods.get(name)
-        if not method:
+        if method := self._stream_methods.get(name):
+            return method
+        else:
             raise ValueError(f"Client does not know how to read stream `{name}`")
-        return method
 
     def read_stream(self, stream: AirbyteStream) -> Generator[Dict[str, Any], None, None]:
         """Yield records from stream"""
@@ -114,6 +113,8 @@ class BaseClient(StreamStateMixin, ABC):
 
 def configured_catalog_from_client(client: BaseClient) -> ConfiguredAirbyteCatalog:
     """Helper to generate configured catalog for testing"""
-    catalog = ConfiguredAirbyteCatalog(streams=[ConfiguredAirbyteStream(stream=stream) for stream in client.streams])
-
-    return catalog
+    return ConfiguredAirbyteCatalog(
+        streams=[
+            ConfiguredAirbyteStream(stream=stream) for stream in client.streams
+        ]
+    )

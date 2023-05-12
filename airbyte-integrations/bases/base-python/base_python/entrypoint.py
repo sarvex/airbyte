@@ -113,7 +113,7 @@ class AirbyteEntrypoint(object):
                     print(message.json(exclude_unset=True))
                 sys.exit(0)
             else:
-                raise Exception("Unexpected command " + cmd)
+                raise Exception(f"Unexpected command {cmd}")
 
 
 def launch(source, args):

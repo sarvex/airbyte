@@ -151,15 +151,13 @@ class AbstractSource(Source, ABC):
             cursor_field=configured_stream.cursor_field, sync_mode=SyncMode.incremental, stream_state=stream_state
         )
         for slice in slices:
-            record_counter = 0
             records = stream_instance.read_records(
                 sync_mode=SyncMode.incremental,
                 stream_slice=slice,
                 stream_state=stream_state,
                 cursor_field=configured_stream.cursor_field or None,
             )
-            for record_data in records:
-                record_counter += 1
+            for record_counter, record_data in enumerate(records, start=1):
                 yield self._as_airbyte_record(stream_name, record_data)
                 stream_state = stream_instance.get_updated_state(stream_state, record_data)
                 if checkpoint_interval and record_counter % checkpoint_interval == 0:

@@ -138,7 +138,7 @@ class CatalogProcessor:
             message = f"'json_schema'.'properties' are not defined for stream {stream_name}"
             properties = get_field(get_field(stream_config, "json_schema", message), "properties", message)
 
-            from_table = "source('{}', '{}')".format(schema_name, raw_table_name)
+            from_table = f"source('{schema_name}', '{raw_table_name}')"
 
             stream_processor = StreamProcessor.create(
                 stream_name=stream_name,
@@ -166,8 +166,7 @@ class CatalogProcessor:
             substreams = []
             for substream in children:
                 substream.tables_registry = tables_registry
-                nested_processors = substream.process()
-                if nested_processors:
+                if nested_processors := substream.process():
                     substreams += nested_processors
                 for file in substream.sql_outputs:
                     output_sql_file(os.path.join(self.output_directory, file), substream.sql_outputs[file])

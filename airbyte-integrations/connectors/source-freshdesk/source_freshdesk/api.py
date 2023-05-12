@@ -156,9 +156,7 @@ class IncrementalStreamAPI(StreamAPI, ABC):
     @property
     def state(self) -> Optional[Mapping[str, Any]]:
         """Current state, if wasn't set return None"""
-        if self._state:
-            return {self.state_pk: str(self._state)}
-        return None
+        return {self.state_pk: str(self._state)} if self._state else None
 
     @state.setter
     def state(self, value: Mapping[str, Any]):
@@ -170,9 +168,7 @@ class IncrementalStreamAPI(StreamAPI, ABC):
 
     def _state_params(self) -> Mapping[str, Any]:
         """Build query parameters responsible for current state"""
-        if self._state:
-            return {self.state_filter: self._state}
-        return {}
+        return {self.state_filter: self._state} if self._state else {}
 
     @property
     def name(self):

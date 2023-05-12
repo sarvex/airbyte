@@ -41,8 +41,7 @@ class PosthogStream(HttpStream, ABC):
         resp_json = response.json()
         if resp_json.get("next"):
             next_query_string = urllib.parse.urlsplit(resp_json["next"]).query
-            params = dict(urllib.parse.parse_qsl(next_query_string))
-            return params
+            return dict(urllib.parse.parse_qsl(next_query_string))
 
     def request_headers(self, **kwargs) -> Mapping[str, Any]:
         return {"Content-Type": "application/json", "User-Agent": "posthog-python/1.4.0"}
@@ -57,7 +56,7 @@ class PosthogStream(HttpStream, ABC):
 
         params = {}
         if next_page_token:
-            params.update(next_page_token)
+            params |= next_page_token
         return params
 
 

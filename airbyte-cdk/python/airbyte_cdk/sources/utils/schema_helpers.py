@@ -52,7 +52,7 @@ class JsonSchemaResolver:
         if "$ref" in schema:
             reference_path = schema.pop("$ref", None)
             resolved = resolver.resolve(reference_path)[1]
-            schema.update(resolved)
+            schema |= resolved
             return self._resolve_schema_references(schema, resolver)
 
         if "properties" in schema:

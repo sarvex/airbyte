@@ -41,8 +41,7 @@ class SourceMicrosoftTeams(BaseSource):
 
     def _get_client(self, config: json):
         """Construct client"""
-        client = self.client_class(config=config)
-        return client
+        return self.client_class(config=config)
 
     def discover(self, logger: AirbyteLogger, config: json) -> AirbyteCatalog:
         client = self._get_client(config)

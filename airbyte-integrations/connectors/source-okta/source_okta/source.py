@@ -56,8 +56,7 @@ class OktaStream(HttpStream, ABC):
         for link, cursor_type in re.findall(link_regex, raw_links):
             if cursor_type == "next":
                 parsed_link = parse.urlparse(link)
-                query_params = dict(parse.parse_qsl(parsed_link.query))
-                return query_params
+                return dict(parse.parse_qsl(parsed_link.query))
         return None
 
     def request_params(
@@ -106,8 +105,7 @@ class IncrementalOktaStream(OktaStream, ABC):
     def request_params(self, stream_state=None, **kwargs):
         stream_state = stream_state or {}
         params = super().request_params(stream_state=stream_state, **kwargs)
-        latest_entry = stream_state.get(self.cursor_field)
-        if latest_entry:
+        if latest_entry := stream_state.get(self.cursor_field):
             params["filter"] = f"{self.cursor_field} gt {latest_entry}"
         return params
 

@@ -49,7 +49,7 @@ class Client(BaseClient):
     }
 
     def __init__(self, api_token):
-        self.headers = {"Authorization": "Bearer " + api_token}
+        self.headers = {"Authorization": f"Bearer {api_token}"}
         self.base_api_url = f"https://api.tempo.io/core/{self.API_VERSION}"
         super().__init__()
 

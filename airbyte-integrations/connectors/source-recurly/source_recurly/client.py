@@ -46,7 +46,7 @@ class Client:
         # The Authorization header is a string containing a Base-64 encoded API Key.
         self._headers = {
             "User-Agent": USER_AGENT,
-            "Authorization": "Basic %s" % b64encode(api_key.encode("ascii")).decode("ascii"),
+            "Authorization": f'Basic {b64encode(api_key.encode("ascii")).decode("ascii")}',
             "Accept": f"application/vnd.recurly.{self._client.api_version()}",
             "Content-Type": "application/json",
         }

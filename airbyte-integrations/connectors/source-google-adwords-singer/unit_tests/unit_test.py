@@ -28,4 +28,3 @@ import os
 
 def test_example_method():
     print(os)
-    assert True

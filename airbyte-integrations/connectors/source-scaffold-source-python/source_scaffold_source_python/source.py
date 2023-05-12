@@ -78,8 +78,6 @@ class SourceScaffoldSourcePython(Source):
             - json_schema providing the specifications of expected schema for this stream (a list of columns described
             by their names and types)
         """
-        streams = []
-
         stream_name = "TableName"  # Example
         json_schema = {  # Example
             "$schema": "http://json-schema.org/draft-07/schema#",
@@ -87,9 +85,7 @@ class SourceScaffoldSourcePython(Source):
             "properties": {"columnName": {"type": "string"}},
         }
 
-        # Not Implemented
-
-        streams.append(AirbyteStream(name=stream_name, json_schema=json_schema))
+        streams = [AirbyteStream(name=stream_name, json_schema=json_schema)]
         return AirbyteCatalog(streams=streams)
 
     def read(

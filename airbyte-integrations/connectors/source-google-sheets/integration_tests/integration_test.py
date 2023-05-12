@@ -44,8 +44,10 @@ SCOPES = [
 
 class GoogleSheetsSourceStandardTest(DefaultStandardSourceTest):
     def get_config(self) -> object:
-        config = {"credentials_json": json.dumps(self._get_creds()), "spreadsheet_id": self._get_spreadsheet_id()}
-        return config
+        return {
+            "credentials_json": json.dumps(self._get_creds()),
+            "spreadsheet_id": self._get_spreadsheet_id(),
+        }
 
     def setup(self) -> None:
         Path(self._get_tmp_dir()).mkdir(parents=True, exist_ok=True)
@@ -92,11 +94,14 @@ class GoogleSheetsSourceStandardTest(DefaultStandardSourceTest):
 
         rows = [["header1", "irrelevant", "header3", "", "ignored"]]
         rows.extend([f"a{i}", "dontmindme", i] for i in range(320))
-        rows.append(["lonely_left_value", "", ""])
-        rows.append(["", "", "lonelyrightvalue"])
-        rows.append(["", "", ""])
-        rows.append(["orphan1", "orphan2", "orphan3"])
-
+        rows.extend(
+            (
+                ["lonely_left_value", "", ""],
+                ["", "", "lonelyrightvalue"],
+                ["", "", ""],
+                ["orphan1", "orphan2", "orphan3"],
+            )
+        )
         sheets_client.update_values(
             spreadsheetId=spreadsheet_id,
             body={"data": {"majorDimension": "ROWS", "values": rows, "range": "sheet1"}, "valueInputOption": "RAW"},

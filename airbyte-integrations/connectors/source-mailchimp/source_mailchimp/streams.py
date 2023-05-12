@@ -62,7 +62,7 @@ class MailChimpStream(HttpStream, ABC):
 
         # Handle pagination by inserting the next page's token in the request parameters
         if next_page_token:
-            params.update(next_page_token)
+            params |= next_page_token
         return params
 
     def parse_response(self, response: requests.Response, **kwargs) -> Iterable[Mapping]:
@@ -101,8 +101,7 @@ class IncrementalMailChimpStream(MailChimpStream, ABC):
         stream_state = stream_state or {}
         params = super().request_params(stream_state=stream_state, **kwargs)
         default_params = {"sort_field": self.cursor_field, "sort_dir": "ASC"}
-        since_value = stream_state.get(self.cursor_field)
-        if since_value:
+        if since_value := stream_state.get(self.cursor_field):
             default_params[f"since_{self.cursor_field}"] = since_value
         params.update(default_params)
         return params
@@ -159,10 +158,8 @@ class EmailActivity(IncrementalMailChimpStream):
         stream_state = stream_state or {}
         params = MailChimpStream.request_params(self, stream_state=stream_state, **kwargs)
 
-        since_value_camp = stream_state.get(stream_slice["campaign_id"])
-        if since_value_camp:
-            since_value = since_value_camp.get(self.cursor_field)
-            if since_value:
+        if since_value_camp := stream_state.get(stream_slice["campaign_id"]):
+            if since_value := since_value_camp.get(self.cursor_field):
                 params["since"] = since_value
         return params
 

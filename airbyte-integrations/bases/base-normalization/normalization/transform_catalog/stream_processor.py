@@ -252,10 +252,11 @@ class StreamProcessor(object):
          - the first value is the normalized "raw" column name
          - the second value is the normalized quoted column name to be used in jinja context
         """
-        fields = []
-        for field in self.properties.keys():
-            if not is_airbyte_column(field):
-                fields.append(field)
+        fields = [
+            field
+            for field in self.properties.keys()
+            if not is_airbyte_column(field)
+        ]
         result = {}
         field_names = set()
         for field in fields:
@@ -327,7 +328,7 @@ from {{ from_table }}
 {{ sql_table_comment }}
 """
         )
-        sql = template.render(
+        return template.render(
             unnesting_before_query=self.unnesting_before_query(),
             parent_hash_id=self.parent_hash_id(),
             fields=self.extract_json_columns(column_names),
@@ -335,7 +336,6 @@ from {{ from_table }}
             unnesting_after_query=self.unnesting_after_query(),
             sql_table_comment=self.sql_table_comment(),
         )
-        return sql
 
     def extract_json_columns(self, column_names: Dict[str, Tuple[str, str]]) -> List[str]:
         return [
@@ -372,13 +372,12 @@ from {{ from_table }}
 {{ sql_table_comment }}
     """
         )
-        sql = template.render(
+        return template.render(
             parent_hash_id=self.parent_hash_id(),
             fields=self.cast_property_types(column_names),
             from_table=jinja_call(from_table),
             sql_table_comment=self.sql_table_comment(),
         )
-        return sql
 
     def cast_property_types(self, column_names: Dict[str, Tuple[str, str]]) -> List[str]:
         return [self.cast_property_type(field, column_names[field][0], column_names[field][1]) for field in column_names]
@@ -408,15 +407,9 @@ from {{ from_table }}
         return f"cast({column_name} as {sql_type}) as {column_name}"
 
     def cast_property_type_as_array(self, property_name: str, column_name: str) -> str:
-        if self.destination_type.value == DestinationType.BIGQUERY.value:
-            # TODO build a struct/record type from properties JSON schema
-            pass
         return column_name
 
     def cast_property_type_as_object(self, property_name: str, column_name: str) -> str:
-        if self.destination_type.value == DestinationType.BIGQUERY.value:
-            # TODO build a struct/record type from properties JSON schema
-            pass
         return jinja_call("type_json()")
 
     def generate_id_hashing_model(self, from_table: str, column_names: Dict[str, Tuple[str, str]]) -> str:
@@ -437,14 +430,13 @@ from {{ from_table }}
 {{ sql_table_comment }}
     """
         )
-        sql = template.render(
+        return template.render(
             parent_hash_id=self.parent_hash_id(),
             fields=self.safe_cast_to_strings(column_names),
             hash_id=self.hash_id(),
             from_table=jinja_call(from_table),
             sql_table_comment=self.sql_table_comment(),
         )
-        return sql
 
     def safe_cast_to_strings(self, column_names: Dict[str, Tuple[str, str]]) -> List[str]:
         return [StreamProcessor.safe_cast_to_string(self.properties[field], column_names[field][1]) for field in column_names]
@@ -477,12 +469,11 @@ from {{ from_table }}
 {{ sql_table_comment }}
         """
         )
-        sql = template.render(
+        return template.render(
             hash_id=self.hash_id(),
             from_table=jinja_call(from_table),
             sql_table_comment=self.sql_table_comment(include_from_table=True),
         )
-        return sql
 
     def generate_scd_type_2_model(self, from_table: str, column_names: Dict[str, Tuple[str, str]]) -> str:
         template = Template(
@@ -511,7 +502,7 @@ from {{ from_table }}
         """
         )
 
-        sql = template.render(
+        return template.render(
             parent_hash_id=self.parent_hash_id(),
             fields=self.list_fields(column_names),
             cursor_field=self.get_cursor_field(column_names),
@@ -520,7 +511,6 @@ from {{ from_table }}
             from_table=jinja_call(from_table),
             sql_table_comment=self.sql_table_comment(include_from_table=True),
         )
-        return sql
 
     def get_cursor_field(self, column_names: Dict[str, Tuple[str, str]]) -> str:
         if not self.cursor_field:
@@ -543,24 +533,23 @@ from {{ from_table }}
     def get_primary_key_from_path(self, column_names: Dict[str, Tuple[str, str]], path: List[str]) -> str:
         if path and len(path) == 1:
             field = path[0]
-            if not is_airbyte_column(field):
-                if "type" in self.properties[field]:
-                    property_type = self.properties[field]["type"]
-                else:
-                    property_type = "object"
-                if is_number(property_type) or is_object(property_type):
-                    # some destinations don't handle float columns (or complex types) as primary keys, turn them to string
-                    return f"cast({column_names[field][0]} as {jinja_call('dbt_utils.type_string()')})"
-                else:
-                    return column_names[field][0]
-            else:
+            if is_airbyte_column(field):
                 # using an airbyte generated column
                 return f"cast({field} as {jinja_call('dbt_utils.type_string()')})"
-        else:
-            if path:
-                raise ValueError(f"Unsupported nested path {'.'.join(path)} for stream {self.stream_name}")
+            property_type = (
+                self.properties[field]["type"]
+                if "type" in self.properties[field]
+                else "object"
+            )
+            if is_number(property_type) or is_object(property_type):
+                # some destinations don't handle float columns (or complex types) as primary keys, turn them to string
+                return f"cast({column_names[field][0]} as {jinja_call('dbt_utils.type_string()')})"
             else:
-                raise ValueError(f"No path specified for stream {self.stream_name}")
+                return column_names[field][0]
+        elif path:
+            raise ValueError(f"Unsupported nested path {'.'.join(path)} for stream {self.stream_name}")
+        else:
+            raise ValueError(f"No path specified for stream {self.stream_name}")
 
     def generate_final_model(self, from_table: str, column_names: Dict[str, Tuple[str, str]]) -> str:
         template = Template(
@@ -579,14 +568,13 @@ from {{ from_table }}
 {{ sql_table_comment }}
     """
         )
-        sql = template.render(
+        return template.render(
             parent_hash_id=self.parent_hash_id(),
             fields=self.list_fields(column_names),
             hash_id=self.hash_id(),
             from_table=jinja_call(from_table),
             sql_table_comment=self.sql_table_comment(include_from_table=True),
         )
-        return sql
 
     @staticmethod
     def list_fields(column_names: Dict[str, Tuple[str, str]]) -> List[str]:
@@ -623,20 +611,13 @@ from {{ from_table }}
         return ref_table(file_name)
 
     def get_model_tags(self, is_intermediate: bool) -> str:
-        tags = ""
-        if self.parent:
-            tags += "nested"
-        else:
-            tags += "top-level"
+        tags = "" + ("nested" if self.parent else "top-level")
         if is_intermediate:
             tags += "-intermediate"
         return f'"{tags}"'
 
     def get_schema(self, is_intermediate: bool) -> str:
-        if is_intermediate:
-            return self.raw_schema
-        else:
-            return self.schema
+        return self.raw_schema if is_intermediate else self.schema
 
     def current_json_path(self) -> str:
         return "/".join(self.json_path)
@@ -663,9 +644,7 @@ from {{ from_table }}
     # Nested Streams
 
     def parent_hash_id(self) -> str:
-        if self.parent:
-            return self.parent.hash_id()
-        return ""
+        return self.parent.hash_id() if self.parent else ""
 
     def unnesting_before_query(self) -> str:
         if self.parent and self.is_nested_array:
@@ -710,26 +689,27 @@ def find_properties_object(path: List[str], field: str, properties) -> Dict[str,
     """
     result = {}
     current_path = path + [field]
-    current = "_".join(current_path)
-    if isinstance(properties, str) or isinstance(properties, int):
+    if isinstance(properties, (str, int)):
         return {}
-    else:
-        if "items" in properties:
-            return find_properties_object(path, field, properties["items"])
-        elif "properties" in properties:
-            # we found a properties object
-            return {current: properties["properties"]}
-        elif "type" in properties and is_simple_property(properties["type"]):
-            # we found a basic type
-            return {current: {}}
-        elif isinstance(properties, dict):
-            for key in properties.keys():
-                child = find_properties_object(path=current_path, field=key, properties=properties[key])
-                if child:
-                    result.update(child)
-        elif isinstance(properties, list):
-            for item in properties:
-                child = find_properties_object(path=current_path, field=field, properties=item)
-                if child:
-                    result.update(child)
+    current = "_".join(current_path)
+    if "items" in properties:
+        return find_properties_object(path, field, properties["items"])
+    elif "properties" in properties:
+        # we found a properties object
+        return {current: properties["properties"]}
+    elif "type" in properties and is_simple_property(properties["type"]):
+        # we found a basic type
+        return {current: {}}
+    elif isinstance(properties, dict):
+        for key in properties.keys():
+            if child := find_properties_object(
+                path=current_path, field=key, properties=properties[key]
+            ):
+                result |= child
+    elif isinstance(properties, list):
+        for item in properties:
+            if child := find_properties_object(
+                path=current_path, field=field, properties=item
+            ):
+                result.update(child)
     return result

@@ -124,7 +124,7 @@ def create_unique_gcs_bucket(storage_client, name: str) -> str:
     Make a unique bucket to which we'll upload the file.
     (GCS buckets are part of a single global namespace.)
     """
-    for i in range(0, 5):
+    for _ in range(0, 5):
         bucket_name = f"{name}-{uuid.uuid1()}"
         try:
             bucket = storage_client.bucket(bucket_name)
@@ -217,11 +217,19 @@ def azblob_file(azblob_credentials, cloud_bucket_name, download_gcs_public_data,
 
 @pytest.fixture(scope="session")
 def private_azblob_file(azblob_credentials, cloud_bucket_name, download_gcs_public_data):
-    for yld in azblob_file(azblob_credentials, cloud_bucket_name, download_gcs_public_data, public=False):
-        yield yld
+    yield from azblob_file(
+        azblob_credentials,
+        cloud_bucket_name,
+        download_gcs_public_data,
+        public=False,
+    )
 
 
 @pytest.fixture(scope="session")
 def public_azblob_file(azblob_credentials, cloud_bucket_name, download_gcs_public_data):
-    for yld in azblob_file(azblob_credentials, cloud_bucket_name, download_gcs_public_data, public=True):
-        yield yld
+    yield from azblob_file(
+        azblob_credentials,
+        cloud_bucket_name,
+        download_gcs_public_data,
+        public=True,
+    )

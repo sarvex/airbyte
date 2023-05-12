@@ -55,8 +55,9 @@ def batch(iterable: Sequence, size: int = 1):
 
 def handle_call_rate_response(exc: FacebookRequestError) -> bool:
     pause_time = DEFAULT_SLEEP_INTERVAL
-    platform_header = exc.http_headers().get("x-app-usage") or exc.http_headers().get("x-ad-account-usage")
-    if platform_header:
+    if platform_header := exc.http_headers().get(
+        "x-app-usage"
+    ) or exc.http_headers().get("x-ad-account-usage"):
         platform_header = json.loads(platform_header)
         call_count = platform_header.get("call_count") or platform_header.get("acc_id_util_pct")
         if call_count and call_count > 99:

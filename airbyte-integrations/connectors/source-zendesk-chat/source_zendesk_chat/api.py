@@ -38,8 +38,7 @@ class Stream(HttpStream):
     limit = 100
 
     def backoff_time(self, response: requests.Response) -> Optional[float]:
-        delay_time = response.headers.get("Retry-After")
-        if delay_time:
+        if delay_time := response.headers.get("Retry-After"):
             return int(delay_time)
 
     def path(self, **kwargs) -> str:
@@ -53,15 +52,13 @@ class Stream(HttpStream):
     ) -> MutableMapping[str, Any]:
         params = {"limit": self.limit}
         if next_page_token:
-            params.update(next_page_token)
+            params |= next_page_token
 
         return params
 
     def parse_response(self, response: requests.Response, **kwargs) -> Iterable[Mapping]:
         response_data = response.json()
-        stream_data = self.get_stream_data(response_data)
-
-        yield from stream_data
+        yield from self.get_stream_data(response_data)
 
     def get_stream_data(self, response_data: Any) -> List[dict]:
         if self.data_field:
@@ -224,8 +221,7 @@ class Bans(IdIncrementalStream):
 
     def get_stream_data(self, response_data) -> List[dict]:
         bans = response_data["ip_address"] + response_data["visitor"]
-        bans = sorted(bans, key=lambda x: pendulum.parse(x["created_at"]))
-        return bans
+        return sorted(bans, key=lambda x: pendulum.parse(x["created_at"]))
 
 
 class Departments(Stream):

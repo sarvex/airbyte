@@ -96,8 +96,9 @@ class AirbyteEntrypoint(object):
                     else:
                         logger.error("Check failed")
 
-                    output_message = AirbyteMessage(type=Type.CONNECTION_STATUS, connectionStatus=check_result).json(exclude_unset=True)
-                    yield output_message
+                    yield AirbyteMessage(
+                        type=Type.CONNECTION_STATUS, connectionStatus=check_result
+                    ).json(exclude_unset=True)
                 elif cmd == "discover":
                     catalog = self.source.discover(logger, config)
                     yield AirbyteMessage(type=Type.CATALOG, catalog=catalog).json(exclude_unset=True)
@@ -108,7 +109,7 @@ class AirbyteEntrypoint(object):
                     for message in generator:
                         yield message.json(exclude_unset=True)
                 else:
-                    raise Exception("Unexpected command " + cmd)
+                    raise Exception(f"Unexpected command {cmd}")
 
 
 def launch(source: Source, args: List[str]):

@@ -66,7 +66,7 @@ def test_cursor_field(cursor_field: List[str], expecting_exception: bool, expect
         cursor_field=cursor_field,
         primary_key=[],
         json_column_name="json_column_name",
-        properties=dict(),
+        properties={},
         tables_registry=TableNameRegistry(DestinationType.POSTGRES),
         from_table="",
     )

@@ -63,7 +63,7 @@ class TransformConfig:
         parser.add_argument("--out", type=str, required=True, help="path to output transformed config to")
 
         parsed_args = parser.parse_args(args)
-        print(str(parsed_args))
+        print(parsed_args)
 
         return {
             "config": parsed_args.config,
@@ -97,8 +97,7 @@ class TransformConfig:
         with open(keyfile_path, "w") as fh:
             fh.write(credentials_json)
 
-        # https://docs.getdbt.com/reference/warehouse-profiles/bigquery-profile
-        dbt_config = {
+        return {
             "type": "bigquery",
             "method": "service-account",
             "project": config["project_id"],
@@ -108,13 +107,10 @@ class TransformConfig:
             "retries": 1,
         }
 
-        return dbt_config
-
     @staticmethod
     def transform_postgres(config: Dict[str, Any]):
         print("transform_postgres")
-        # https://docs.getdbt.com/reference/warehouse-profiles/postgres-profile
-        dbt_config = {
+        return {
             "type": "postgres",
             "host": config["host"],
             "user": config["username"],
@@ -125,13 +121,10 @@ class TransformConfig:
             "threads": 32,
         }
 
-        return dbt_config
-
     @staticmethod
     def transform_redshift(config: Dict[str, Any]):
         print("transform_redshift")
-        # https://docs.getdbt.com/reference/warehouse-profiles/redshift-profile
-        dbt_config = {
+        return {
             "type": "redshift",
             "host": config["host"],
             "user": config["username"],
@@ -141,16 +134,13 @@ class TransformConfig:
             "schema": config["schema"],
             "threads": 32,
         }
-        return dbt_config
 
     @staticmethod
     def transform_snowflake(config: Dict[str, Any]):
         print("transform_snowflake")
         # here account is everything before ".snowflakecomputing.com" as it can include account, region & cloud environment information)
         account = config["host"].replace(".snowflakecomputing.com", "").replace("http://", "").replace("https://", "")
-        # https://docs.getdbt.com/reference/warehouse-profiles/snowflake-profile
-        # snowflake coerces most of these values to uppercase, but if dbt has them as a different casing it has trouble finding the resources it needs. thus we coerce them to upper.
-        dbt_config = {
+        return {
             "type": "snowflake",
             "account": account,
             "user": config["username"].upper(),
@@ -163,7 +153,6 @@ class TransformConfig:
             "client_session_keep_alive": False,
             "query_tag": "normalization",
         }
-        return dbt_config
 
     @staticmethod
     def read_json_config(input_path: str):

@@ -57,15 +57,14 @@ class JiraStream(HttpStream, ABC):
         if "nextPage" in response_data:
             next_page = response_data["nextPage"]
             params = parse_qs(urlparse.urlparse(next_page).query)
-        else:
-            if all(paging_metadata in response_data for paging_metadata in ("startAt", "maxResults", "total")):
-                start_at = response_data["startAt"]
-                max_results = response_data["maxResults"]
-                total = response_data["total"]
-                end_at = start_at + max_results
-                if not end_at > total:
-                    params["startAt"] = end_at
-                    params["maxResults"] = max_results
+        elif all(paging_metadata in response_data for paging_metadata in ("startAt", "maxResults", "total")):
+            max_results = response_data["maxResults"]
+            total = response_data["total"]
+            start_at = response_data["startAt"]
+            end_at = start_at + max_results
+            if not end_at > total:
+                params["startAt"] = end_at
+                params["maxResults"] = max_results
         return params
 
     def request_params(
@@ -77,7 +76,7 @@ class JiraStream(HttpStream, ABC):
         params = {}
 
         if next_page_token:
-            params.update(next_page_token)
+            params |= next_page_token
 
         return params
 
@@ -185,10 +184,11 @@ class Issues(IncrementalJiraStream):
         latest_record_date = pendulum.parse(latest_record.get("fields", {}).get(self.cursor_field))
         if current_stream_state:
             current_stream_state = current_stream_state.get(self.cursor_field)
-            if current_stream_state:
-                return {self.cursor_field: str(max(latest_record_date, pendulum.parse(current_stream_state)))}
         else:
             return {self.cursor_field: str(latest_record_date)}
+
+        if current_stream_state:
+            return {self.cursor_field: str(max(latest_record_date, pendulum.parse(current_stream_state)))}
 
 
 class IssueComments(JiraStream):
@@ -364,10 +364,11 @@ class IssueWorklogs(IncrementalJiraStream):
         latest_record_date = pendulum.parse(latest_record.get("started"))
         if current_stream_state:
             current_stream_state = current_stream_state.get(self.cursor_field)
-            if current_stream_state:
-                return {self.cursor_field: str(max(latest_record_date, pendulum.parse(current_stream_state)))}
         else:
             return {self.cursor_field: str(latest_record_date)}
+
+        if current_stream_state:
+            return {self.cursor_field: str(max(latest_record_date, pendulum.parse(current_stream_state)))}
 
     def read_records(self, stream_slice: Optional[Mapping[str, Any]] = None, **kwargs) -> Iterable[Mapping[str, Any]]:
         issues_stream = Issues(authenticator=self.authenticator, domain=self._domain)
@@ -393,8 +394,7 @@ class Permissions(JiraStream):
 
     def parse_response(self, response: requests.Response, **kwargs) -> Iterable[Mapping]:
         response_json = response.json()
-        records = response_json.get(self.parse_response_root, {}).values()
-        yield from records
+        yield from response_json.get(self.parse_response_root, {}).values()
 
 
 class PermissionSchemes(JiraStream):

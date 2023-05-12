@@ -73,14 +73,11 @@ class ExchangeRates(HttpStream):
         return [response.json()]
 
     def get_updated_state(self, current_stream_state: MutableMapping[str, Any], latest_record: Mapping[str, Any]) -> Mapping[str, any]:
-        # This method is called once for each record returned from the API to compare the cursor field value in that record with the current state
-        # we then return an updated state object. If this is the first time we run a sync or no state was passed, current_stream_state will be None.
-        if current_stream_state is not None and "date" in current_stream_state:
-            current_parsed_date = datetime.strptime(current_stream_state["date"], "%Y-%m-%d")
-            latest_record_date = datetime.strptime(latest_record["date"], "%Y-%m-%d")
-            return {"date": max(current_parsed_date, latest_record_date).strftime("%Y-%m-%d")}
-        else:
+        if current_stream_state is None or "date" not in current_stream_state:
             return {"date": self.start_date.strftime("%Y-%m-%d")}
+        current_parsed_date = datetime.strptime(current_stream_state["date"], "%Y-%m-%d")
+        latest_record_date = datetime.strptime(latest_record["date"], "%Y-%m-%d")
+        return {"date": max(current_parsed_date, latest_record_date).strftime("%Y-%m-%d")}
 
     def _chunk_date_range(self, start_date: datetime) -> List[Mapping[str, any]]:
         """

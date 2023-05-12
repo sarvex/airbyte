@@ -50,7 +50,7 @@ class MockOrders:
         self.credentials = credentials
         self.marketplace = marketplace
 
-    def get_orders(LastUpdatedAfter, MaxResultsPerPage, NextToken):
+    def get_orders(self, MaxResultsPerPage, NextToken):
         return Response(data=order_response)
 
 
@@ -59,13 +59,13 @@ class MockReports:
         self.credentials = credentials
         self.marketplace = marketplace
 
-    def create_report(reportType, dataStartTime, dataEndTime):
+    def create_report(self, dataStartTime, dataEndTime):
         return Response(data=request_response)
 
-    def get_report(report_id):
+    def get_report(self):
         return Response(data=request_response)
 
-    def get_report_document(report_id, decrypt):
+    def get_report_document(self, decrypt):
         return Response(data=request_response)
 
 

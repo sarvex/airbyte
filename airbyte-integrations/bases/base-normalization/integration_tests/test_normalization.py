@@ -215,36 +215,41 @@ def copy_test_files(src: str, dst: str, destination_type: DestinationType, repla
     Copy file while hacking snowflake identifiers that needs to be uppercased...
     (so we can share these dbt tests files accross destinations)
     """
-    if os.path.exists(src):
-        temp_dir = tempfile.mkdtemp(dir="/tmp/", prefix="normalization_test_")
-        temporary_folders.add(temp_dir)
+    if not os.path.exists(src):
+        return
+    temp_dir = tempfile.mkdtemp(dir="/tmp/", prefix="normalization_test_")
+    temporary_folders.add(temp_dir)
         # Copy and adapt capitalization
-        if destination_type.value == DestinationType.SNOWFLAKE.value:
-            shutil.copytree(src, temp_dir + "/upper", copy_function=copy_upper)
-            src = temp_dir + "/upper"
-        elif destination_type.value == DestinationType.REDSHIFT.value:
-            shutil.copytree(src, temp_dir + "/lower", copy_function=copy_lower)
-            src = temp_dir + "/lower"
-        if os.path.exists(replace_identifiers):
-            with open(replace_identifiers, "r") as file:
-                contents = file.read()
-            identifiers_map = json.loads(contents)
-            pattern = []
-            replace_value = []
-            if destination_type.value in identifiers_map:
-                for entry in identifiers_map[destination_type.value]:
-                    for k in entry:
-                        pattern.append(k)
-                        replace_value.append(entry[k])
-            if pattern and replace_value:
+    if destination_type.value == DestinationType.SNOWFLAKE.value:
+        shutil.copytree(src, f"{temp_dir}/upper", copy_function=copy_upper)
+        src = f"{temp_dir}/upper"
+    elif destination_type.value == DestinationType.REDSHIFT.value:
+        shutil.copytree(src, f"{temp_dir}/lower", copy_function=copy_lower)
+        src = f"{temp_dir}/lower"
+    if os.path.exists(replace_identifiers):
+        with open(replace_identifiers, "r") as file:
+            contents = file.read()
+        identifiers_map = json.loads(contents)
+        pattern = []
+        replace_value = []
+        if destination_type.value in identifiers_map:
+            for entry in identifiers_map[destination_type.value]:
+                for k in entry:
+                    pattern.append(k)
+                    replace_value.append(entry[k])
+        if pattern and replace_value:
 
-                def copy_replace_identifiers(src, dst):
-                    dbt_test_utils.copy_replace(src, dst, pattern, replace_value)
+            def copy_replace_identifiers(src, dst):
+                dbt_test_utils.copy_replace(src, dst, pattern, replace_value)
 
-                shutil.copytree(src, temp_dir + "/replace", copy_function=copy_replace_identifiers)
-                src = temp_dir + "/replace"
-        # final copy
-        shutil.copytree(src, dst)
+            shutil.copytree(
+                src,
+                f"{temp_dir}/replace",
+                copy_function=copy_replace_identifiers,
+            )
+            src = f"{temp_dir}/replace"
+    # final copy
+    shutil.copytree(src, dst)
 
 
 def copy_upper(src, dst):
@@ -285,17 +290,17 @@ def copy_lower(src, dst):
 
 def to_upper_identifier(input: re.Match) -> str:
     if len(input.groups()) == 2:
-        return f"{input.group(1)} {input.group(2).upper()}"
+        return f"{input[1]} {input[2].upper()}"
     elif len(input.groups()) == 3:
-        return f"{input.group(1)}{input.group(2).upper()}{input.group(3)}"
+        return f"{input[1]}{input[2].upper()}{input[3]}"
     else:
         raise Exception(f"Unexpected number of groups in {input}")
 
 
 def to_lower_identifier(input: re.Match) -> str:
     if len(input.groups()) == 2:
-        return f"{input.group(1)} {input.group(2).lower()}"
+        return f"{input[1]} {input[2].lower()}"
     elif len(input.groups()) == 3:
-        return f"{input.group(1)}{input.group(2).lower()}{input.group(3)}"
+        return f"{input[1]}{input[2].lower()}{input[3]}"
     else:
         raise Exception(f"Unexpected number of groups in {input}")

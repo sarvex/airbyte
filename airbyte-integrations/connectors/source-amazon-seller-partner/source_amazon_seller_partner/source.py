@@ -46,8 +46,7 @@ class SourceAmazonSellerPartner(Source):
     client_class = BaseClient
 
     def _get_client(self, config: Mapping):
-        client = self.client_class(**config)
-        return client
+        return self.client_class(**config)
 
     def check(self, logger: AirbyteLogger, config: json) -> AirbyteConnectionStatus:
         client = self._get_client(config)

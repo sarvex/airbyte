@@ -64,18 +64,19 @@ def pytest_generate_tests(metafunc):
     Hook function will skip test_suite2 and test_suite3, but parametrize test_suite1 with two sets of inputs.
     """
 
-    if "inputs" in metafunc.fixturenames:
-        config_key = metafunc.cls.config_key()
-        test_name = f"{metafunc.cls.__name__}.{metafunc.function.__name__}"
-        config = load_config(metafunc.config.getoption("--acceptance-test-config"))
-        if not hasattr(config.tests, config_key) or not getattr(config.tests, config_key):
-            pytest.skip(f"Skipping {test_name} because not found in the config")
-        else:
-            test_inputs = getattr(config.tests, config_key)
-            if not test_inputs:
-                pytest.skip(f"Skipping {test_name} because no inputs provided")
+    if "inputs" not in metafunc.fixturenames:
+        return
+    config_key = metafunc.cls.config_key()
+    test_name = f"{metafunc.cls.__name__}.{metafunc.function.__name__}"
+    config = load_config(metafunc.config.getoption("--acceptance-test-config"))
+    if not hasattr(config.tests, config_key) or not getattr(config.tests, config_key):
+        pytest.skip(f"Skipping {test_name} because not found in the config")
+    else:
+        test_inputs = getattr(config.tests, config_key)
+        if not test_inputs:
+            pytest.skip(f"Skipping {test_name} because no inputs provided")
 
-            metafunc.parametrize("inputs", test_inputs)
+        metafunc.parametrize("inputs", test_inputs)
 
 
 def pytest_assertrepr_compare(config, op, left, right):

@@ -99,7 +99,7 @@ class TestBasicRead(BaseTest):
         records = [message.record for message in output if message.type == Type.RECORD]
         counter = Counter(record.stream for record in records)
 
-        all_streams = set(stream.stream.name for stream in configured_catalog.streams)
+        all_streams = {stream.stream.name for stream in configured_catalog.streams}
         streams_with_records = set(counter.keys())
         streams_without_records = all_streams - streams_with_records
 

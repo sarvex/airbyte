@@ -94,7 +94,7 @@ def main():
         email = create_person(i, token=token)
         if i < global_exclusion_num:
             create_global_exclusion(email, api_key=api_key)
-        for k in range(events_per_person):
+        for _ in range(events_per_person):
             create_event(email=email, name="Clicked Email", token=token)
 
 

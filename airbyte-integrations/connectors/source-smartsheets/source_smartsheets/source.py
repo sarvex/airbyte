@@ -50,20 +50,16 @@ def get_prop(col_type: str) -> Dict[str, any]:
         "DATE": {"type": "string", "format": "date"},
         "DATETIME": {"type": "string", "format": "date-time"},
     }
-    if col_type in props.keys():
-        return props[col_type]
-    else:  # assume string
-        return props["TEXT_NUMBER"]
+    return props.get(col_type, props["TEXT_NUMBER"])
 
 
 def get_json_schema(sheet: Dict) -> Dict:
     column_info = {i["title"]: get_prop(i["type"]) for i in sheet["columns"]}
-    json_schema = {
+    return {
         "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": column_info,
     }
-    return json_schema
 
 
 # main class definition
@@ -123,7 +119,7 @@ class SourceSmartsheets(Source):
             if isinstance(properties, list):
                 columns = tuple(key for dct in properties for key in dct.keys())
             elif isinstance(properties, dict):
-                columns = tuple(i for i in properties.keys())
+                columns = tuple(properties.keys())
             else:
                 logger.error("Could not read properties from the JSONschema in this stream")
             name = stream.name

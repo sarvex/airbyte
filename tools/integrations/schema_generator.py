@@ -68,7 +68,7 @@ def main():
             builder.add_object(message.record.data)
     for stream_name, builder in builders.items():
         schema = builder.to_schema()
-        output_file_name = os.path.join(default_folder, stream_name + ".json")
+        output_file_name = os.path.join(default_folder, f"{stream_name}.json")
         with open(output_file_name, "w") as outfile:
             json.dump(schema, outfile, indent=2, sort_keys=True)
 

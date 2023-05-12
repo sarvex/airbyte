@@ -136,10 +136,7 @@ class URLFile:
         :return: the corresponding URL without URL prefix / scheme
         """
         parse_result = urlparse(self._url)
-        if parse_result.scheme:
-            return self._url.split("://")[-1]
-        else:
-            return self._url
+        return self._url.split("://")[-1] if parse_result.scheme else self._url
 
     @property
     def storage_scheme(self) -> str:
@@ -156,7 +153,7 @@ class URLFile:
             return "azure://"
         elif storage_name == "HTTPS":
             return "https://"
-        elif storage_name == "SSH" or storage_name == "SCP":
+        elif storage_name in ["SSH", "SCP"]:
             return "scp://"
         elif storage_name == "SFTP":
             return "sftp://"
@@ -187,27 +184,27 @@ class URLFile:
             client = GCSClient(credentials=credentials, project=credentials._project_id)
         else:
             client = GCSClient.create_anonymous_client()
-        file_to_close = smart_open.open(self.full_url, transport_params=dict(client=client), mode=mode)
-
-        return file_to_close
+        return smart_open.open(
+            self.full_url, transport_params=dict(client=client), mode=mode
+        )
 
     def _open_aws_url(self, binary):
         mode = "rb" if binary else "r"
         aws_access_key_id = self._provider.get("aws_access_key_id")
         aws_secret_access_key = self._provider.get("aws_secret_access_key")
-        use_aws_account = aws_access_key_id and aws_secret_access_key
-
-        if use_aws_account:
+        if use_aws_account := aws_access_key_id and aws_secret_access_key:
             aws_access_key_id = self._provider.get("aws_access_key_id", "")
             aws_secret_access_key = self._provider.get("aws_secret_access_key", "")
-            result = smart_open.open(f"{self.storage_scheme}{aws_access_key_id}:{aws_secret_access_key}@{self.url}", mode=mode)
+            return smart_open.open(
+                f"{self.storage_scheme}{aws_access_key_id}:{aws_secret_access_key}@{self.url}",
+                mode=mode,
+            )
         else:
             config = Config(signature_version=UNSIGNED)
             params = {
                 "resource_kwargs": {"config": config},
             }
-            result = smart_open.open(self.full_url, transport_params=params, mode=mode)
-        return result
+            return smart_open.open(self.full_url, transport_params=params, mode=mode)
 
     def _open_azblob_url(self, binary):
         mode = "rb" if binary else "r"
@@ -215,17 +212,17 @@ class URLFile:
         storage_acc_url = f"https://{storage_account}.blob.core.windows.net"
         sas_token = self._provider.get("sas_token", None)
         shared_key = self._provider.get("shared_key", None)
-        # if both keys are provided, shared_key is preferred as has permissions on entire storage account
-        credential = shared_key or sas_token
-
-        if credential:
+        if credential := shared_key or sas_token:
             client = BlobServiceClient(account_url=storage_acc_url, credential=credential)
         else:
             # assuming anonymous public read access given no credential
             client = BlobServiceClient(account_url=storage_acc_url)
 
-        result = smart_open.open(f"{self.storage_scheme}{self.url}", transport_params=dict(client=client), mode=mode)
-        return result
+        return smart_open.open(
+            f"{self.storage_scheme}{self.url}",
+            transport_params=dict(client=client),
+            mode=mode,
+        )
 
 
 class Client:
@@ -270,10 +267,8 @@ class Client:
     def load_nested_json(self, fp) -> list:
         if self._reader_format == "jsonl":
             result = []
-            line = fp.readline()
-            while line:
+            while line := fp.readline():
                 result.append(json.loads(line))
-                line = fp.readline()
         else:
             result = json.load(fp)
             if not isinstance(result, list):
@@ -347,7 +342,7 @@ class Client:
     def read(self, fields: Iterable = None) -> Iterable[dict]:
         """Read data from the stream"""
         with self.reader.open(binary=self.binary_source) as fp:
-            if self._reader_format == "json" or self._reader_format == "jsonl":
+            if self._reader_format in ["json", "jsonl"]:
                 yield from self.load_nested_json(fp)
             else:
                 fields = set(fields) if fields else None
@@ -358,7 +353,7 @@ class Client:
 
     def _stream_properties(self):
         with self.reader.open(binary=self.binary_source) as fp:
-            if self._reader_format == "json" or self._reader_format == "jsonl":
+            if self._reader_format in ["json", "jsonl"]:
                 return self.load_nested_json_schema(fp)
 
             df_list = self.load_dataframes(fp, skip_data=False)

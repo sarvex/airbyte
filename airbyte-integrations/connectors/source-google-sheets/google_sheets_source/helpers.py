@@ -78,14 +78,13 @@ class Helpers(object):
         fields = []
         duplicate_fields = set()
         for cell_value in header_row_values:
-            if cell_value:
-                if cell_value in fields:
-                    duplicate_fields.add(cell_value)
-                else:
-                    fields.append(cell_value)
-            else:
+            if not cell_value:
                 break
 
+            if cell_value in fields:
+                duplicate_fields.add(cell_value)
+            else:
+                fields.append(cell_value)
         # Removing all duplicate fields
         if duplicate_fields:
             fields = [field for field in fields if field not in duplicate_fields]
@@ -154,12 +153,9 @@ class Helpers(object):
         for sheet, columns in requested_sheets_and_columns.items():
             if sheet in available_sheets:
                 first_row = Helpers.get_first_row(client, spreadsheet_id, sheet)
-                # Find the column index of each header value
-                idx = 0
-                for cell_value in first_row:
+                for idx, cell_value in enumerate(first_row):
                     if cell_value in columns:
                         available_sheets_to_column_index_to_name[sheet][idx] = cell_value
-                    idx += 1
         return available_sheets_to_column_index_to_name
 
     @staticmethod
@@ -174,14 +170,11 @@ class Helpers(object):
 
     @staticmethod
     def is_row_empty(cell_values: List[str]) -> bool:
-        for cell in cell_values:
-            if cell.strip() != "":
-                return False
-        return True
+        return all(cell.strip() == "" for cell in cell_values)
 
     @staticmethod
     def row_contains_relevant_data(cell_values: List[str], relevant_indices: Iterable[int]) -> bool:
-        for idx in relevant_indices:
-            if len(cell_values) > idx and cell_values[idx].strip() != "":
-                return True
-        return False
+        return any(
+            len(cell_values) > idx and cell_values[idx].strip() != ""
+            for idx in relevant_indices
+        )

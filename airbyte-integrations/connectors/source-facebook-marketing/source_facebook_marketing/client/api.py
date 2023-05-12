@@ -128,8 +128,10 @@ class IncrementalStreamAPI(StreamAPI, ABC):
 
     @state.setter
     def state(self, value):
-        potentially_new_records_in_the_past = self._include_deleted and not value.get("include_deleted", False)
-        if potentially_new_records_in_the_past:
+        if (
+            potentially_new_records_in_the_past := self._include_deleted
+            and not value.get("include_deleted", False)
+        ):
             logger.info(f"Ignoring bookmark for {self.name} because of enabled `include_deleted` option")
         else:
             self._state = pendulum.parse(value[self.state_pk])

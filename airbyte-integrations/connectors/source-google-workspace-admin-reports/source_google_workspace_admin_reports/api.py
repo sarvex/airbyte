@@ -52,8 +52,7 @@ class API:
         self.lookback = lookback
 
     def _load_account_info(self) -> Dict:
-        account_info = json.loads(self._credentials_json)
-        return account_info
+        return json.loads(self._credentials_json)
 
     def _obtain_creds(self) -> service_account.Credentials:
         account_info = self._load_account_info()
@@ -63,8 +62,7 @@ class API:
     def _construct_resource(self) -> Resource:
         if not self._creds:
             self._obtain_creds()
-        service = build("admin", "reports_v1", credentials=self._creds)
-        return service
+        return build("admin", "reports_v1", credentials=self._creds)
 
     def _get_resource(self, name: str):
         service = self._construct_resource()
@@ -74,8 +72,7 @@ class API:
     def get(self, name: str, params: Dict = None) -> Dict:
         if not self._resource:
             self._resource = self._get_resource(name)
-        response = self._resource().list(**params).execute()
-        return response
+        return self._resource().list(**params).execute()
 
 
 class StreamAPI(ABC):
@@ -127,9 +124,7 @@ class IncrementalStreamAPI(StreamAPI, ABC):
     @property
     def state(self) -> Optional[Mapping[str, Any]]:
         """Current state, if wasn't set return None"""
-        if self._state:
-            return {self.state_pk: str(self._state)}
-        return None
+        return {self.state_pk: str(self._state)} if self._state else None
 
     @state.setter
     def state(self, value):

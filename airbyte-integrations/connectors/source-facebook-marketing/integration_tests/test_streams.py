@@ -85,13 +85,12 @@ class TestFacebookMarketingSource:
         catalog = self.slice_catalog(configured_catalog, {"campaigns"})
         records, _ = self._read_records(config_with_include_deleted, catalog)
 
-        is_specific_campaign_pulled = False
-        for record in records:
-            if record.record.data["id"] == specific_campaign_id:
-                is_specific_campaign_pulled = True
-                break
-
-        assert is_specific_campaign_pulled is True, f"campaigns stream should have a deleted campaign with id={specific_campaign_id}"
+        is_specific_campaign_pulled = any(
+            record.record.data["id"] == specific_campaign_id for record in records
+        )
+        assert (
+            is_specific_campaign_pulled
+        ), f"campaigns stream should have a deleted campaign with id={specific_campaign_id}"
 
     @pytest.mark.parametrize("stream_name, deleted_num", [("ads", 2), ("campaigns", 3), ("adsets", 1)])
     def test_streams_with_include_deleted_and_state(self, stream_name, deleted_num, config_with_include_deleted, configured_catalog, state):

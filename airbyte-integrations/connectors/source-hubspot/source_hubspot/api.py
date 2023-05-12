@@ -112,7 +112,7 @@ class API:
             "client_secret": self._credentials["client_secret"],
         }
 
-        resp = requests.post(self.BASE_URL + "/oauth/v1/token", data=payload)
+        resp = requests.post(f"{self.BASE_URL}/oauth/v1/token", data=payload)
         if resp.status_code == HTTPStatus.FORBIDDEN:
             raise HubspotInvalidAuth(resp.content, response=resp)
 
@@ -250,8 +250,7 @@ class Stream(ABC):
     def _filter_old_records(self, records: Iterable) -> Iterable:
         """Skip records that was updated before our start_date"""
         for record in records:
-            updated_at = record[self.updated_at_field]
-            if updated_at:
+            if updated_at := record[self.updated_at_field]:
                 updated_at = self._field_to_datetime(updated_at)
                 if updated_at < self._start_date:
                     continue
@@ -262,7 +261,9 @@ class Stream(ABC):
             response = getter(params=params)
             if isinstance(response, Mapping):
                 if response.get(self.data_field) is None:
-                    raise RuntimeError("Unexpected API response: {} not in {}".format(self.data_field, response.keys()))
+                    raise RuntimeError(
+                        f"Unexpected API response: {self.data_field} not in {response.keys()}"
+                    )
 
                 yield from response[self.data_field]
 
@@ -324,9 +325,7 @@ class IncrementalStream(Stream, ABC):
     @property
     def state(self) -> Optional[Mapping[str, Any]]:
         """Current state, if wasn't set return None"""
-        if self._state:
-            return {self.state_pk: str(self._state)}
-        return None
+        return {self.state_pk: str(self._state)} if self._state else None
 
     @state.setter
     def state(self, value):
@@ -476,8 +475,7 @@ class DealStageHistoryStream(Stream):
     def _transform(self, records: Iterable) -> Iterable:
         for record in super()._transform(records):
             dealstage = record.get("properties", {}).get("dealstage", {})
-            updated_at = dealstage.get(self.updated_at_field)
-            if updated_at:
+            if updated_at := dealstage.get(self.updated_at_field):
                 yield {"id": record.get("dealId"), "dealstage": dealstage, self.updated_at_field: updated_at}
 
     def list(self, fields) -> Iterable:
@@ -493,10 +491,11 @@ class DealStream(CRMObjectStream):
         self._stage_history = DealStageHistoryStream(**kwargs)
 
     def list(self, fields) -> Iterable:
-        history_by_id = {}
-        for record in self._stage_history.list(fields):
-            if all(field in record for field in ("id", "dealstage")):
-                history_by_id[record["id"]] = record["dealstage"]
+        history_by_id = {
+            record["id"]: record["dealstage"]
+            for record in self._stage_history.list(fields)
+            if all(field in record for field in ("id", "dealstage"))
+        }
         for record in super().list(fields):
             if record.get("id") and int(record["id"]) in history_by_id:
                 record["dealstage"] = history_by_id[int(record["id"])]

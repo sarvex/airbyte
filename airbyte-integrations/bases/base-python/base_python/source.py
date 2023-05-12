@@ -57,15 +57,13 @@ class BaseSource(Source):
 
     def _get_client(self, config: Mapping):
         """Construct client"""
-        client = self.client_class(**config)
-
-        return client
+        return self.client_class(**config)
 
     def discover(self, logger: AirbyteLogger, config: Mapping[str, Any]) -> AirbyteCatalog:
         """Discover streams"""
         client = self._get_client(config)
 
-        return AirbyteCatalog(streams=[stream for stream in client.streams])
+        return AirbyteCatalog(streams=list(client.streams))
 
     def check(self, logger: AirbyteLogger, config: Mapping[str, Any]) -> AirbyteConnectionStatus:
         """Check connection"""

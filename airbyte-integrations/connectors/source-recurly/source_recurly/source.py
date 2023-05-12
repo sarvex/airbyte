@@ -80,9 +80,7 @@ class SourceRecurly(Source):
         logger.info("Finished syncing recurly")
 
     def _client(self, config: json):
-        client = Client(api_key=config["api_key"])
-
-        return client
+        return Client(api_key=config["api_key"])
 
     @staticmethod
     def _read_record(client: Client, stream: str):
