@@ -29,7 +29,7 @@ MAIN_REQUIREMENTS = [
     "airbyte-protocol",
     "base-python",
     "pendulum==1.2.0",
-    "requests==2.25.1",
+    "requests==2.31.0",
 ]
 
 TEST_REQUIREMENTS = ["pytest==6.1.2", "source-acceptance-test"]
